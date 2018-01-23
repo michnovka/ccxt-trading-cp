@@ -1,0 +1,16 @@
+{
+  "exchanges_unencrypted": [
+    {
+      "exchange": "binance",
+      "apiKey": "XXXXXXXXXXXXXXXXXXXXXXXXX",
+      "apiSecret": "XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    },
+    {
+      "exchange": "bittrex",
+      "inactive": 1,
+      "apiKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "apiSecret": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    },
+  ],
+  "exchange_for_btc_usd": "okcoinusd"
+}

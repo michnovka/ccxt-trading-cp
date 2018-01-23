@@ -1,0 +1,24 @@
+{
+  "name": "ccxt-trading-cp",
+  "version": "1.0.0",
+  "description": "Trading CP for crypto currency based on CCXT",
+  "main": "tradingcp.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ansicolor": "^1.1.71",
+    "asciichart": "^1.5.7",
+    "ccxt": "^1.10.803",
+    "command-line-args": "^4.0.7",
+    "command-line-usage": "^4.0.2",
+    "number-format.js": "^1.1.11",
+    "ololog": "^1.1.84",
+    "random-hash": "^4.0.1",
+    "string-padder": "^1.0.3",
+    "terminal-kit": "^1.14.3",
+    "terminal-table": "0.0.12"
+  }
+}
