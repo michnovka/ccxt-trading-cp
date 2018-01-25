@@ -83,15 +83,23 @@ I suggest making file executable and running it as:
 ./tradingcp.js [ARGUMENTS]
 ```
 
+Note that exchange option is taken as default, so you can use 
+
+```
+./tradingcp.js [ARGUMENTS] ETH
+```
+
+to show ETH/BTC exchange section.
+
 #### Options
 
-* *-b, --base BASE* - This defines base for markets (we trade in this currency)
-* *--balance* - Go to balance overview (show how much of what I have on all exchanges and its BTC value)
+* *-q, --quote QUOTE* - This defines quote for markets (we trade in this currency) [Default: BTC]
+* *-b, --balance* - Go to balance overview (show how much of what I have on all exchanges and its BTC value)
 * *--crossstock* - Go to cross-stock analysis (can I buy coin on one exchange and sell on another one?)                        
 * *--crosscurrency* - Go to cross-currency analysis (can I buy coin for BTC, then sell it for ETH then sell ETH for BTC and make profit?)
-* *--btcusd - Show BTC / USD price
-* *-e, --exchange COIN - Load exchange details about given coin
-* *-p, --password PASSWORD - Prefill config password in command line
+* *--btcusd* - Show BTC / USD price
+* *-p, --password* PASSWORD - Prefill config password in command line
+* *-e, --exchange* COIN - Load exchange details about given coin
   
 ## Tested exchanges
 

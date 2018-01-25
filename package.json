@@ -1,6 +1,6 @@
 {
   "name": "ccxt-trading-cp",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Trading CP for crypto currency based on CCXT",
   "main": "tradingcp.js",
   "scripts": {

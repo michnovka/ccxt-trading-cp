@@ -10,13 +10,13 @@ let config = require('./config-reader.js');
 
 
 const commandLineOptionDefinitions = [
-    { name: 'base', alias: 'b', type: String, typeLabel: '[underline]{BASE}', description: 'This defines base for markets (we trade in this currency)' },
-    { name: 'balance', type: Boolean, description: 'Go to balance overview' },
+    { name: 'quote', alias: 'q', type: String, typeLabel: '[underline]{QUOTE}', description: 'This defines quote for markets (we trade in this currency)' },
+    { name: 'balance', alias: 'b', type: Boolean, description: 'Go to balance overview' },
     { name: 'crossstock', type: Boolean, description: 'Go to cross-stock analysis' },
     { name: 'crosscurrency', type: Boolean, description: 'Go to cross-currency analysis' },
     { name: 'btcusd', type: Boolean, description: 'Show BTC / USD price' },
     { name: 'exchange', alias: 'e', type: String, defaultOption: true , typeLabel: '[underline]{COIN}', description: 'Load stock details about given coin' },
-    { name: 'password', alias: 'p', type: String, typeLabel: '[underline]{PASSWORD}', description: 'Prefill config password in command line' }
+    { name: 'password', alias: 'p', type: String, typeLabel: '[underline]{PASSWORD}', description: 'Pre-fill config password in command line' }
 ];
 
 let cmo = null;
@@ -55,13 +55,13 @@ const command_line_options = cmo;
 // -----------------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------------
 
-let _SELECTED_BASE = 'BTC';
+let _SELECTED_QUOTE = 'BTC';
 let _BALANCES_BY_COINS = {};
 let _BALANCES_BY_EXCHANGES = {};
 let _PRICES_BY_EXCHANGES = {};
 let _PRICES_BY_COINS = {};
-let _BASES_BY_EXCHANGES = {};
-let _EXCHANGES_BY_BASES = {};
+let _QUOTES_BY_EXCHANGES = {};
+let _EXCHANGES_BY_QUOTES = {};
 let _OPEN_ORDERS = {};
 
 function getArrayItem(){
@@ -192,8 +192,8 @@ async function getPrices(reload, do_not_create_progress_bar){
 
     _PRICES_BY_EXCHANGES = {BID: {}, ASK: {}};
     _PRICES_BY_COINS = {BID: {}, ASK: {}};
-    _BASES_BY_EXCHANGES = {};
-    _EXCHANGES_BY_BASES = {};
+    _QUOTES_BY_EXCHANGES = {};
+    _EXCHANGES_BY_QUOTES = {};
 
     let promises = [];
 
@@ -290,17 +290,17 @@ async function getPrices(reload, do_not_create_progress_bar){
                     if(!_PRICES_BY_COINS['BID'][m[2]][m[1]])
                         _PRICES_BY_COINS['BID'][m[2]][m[1]] = {};
 
-                    if(!_BASES_BY_EXCHANGES[exchange_id])
-                        _BASES_BY_EXCHANGES[exchange_id] = {};
+                    if(!_QUOTES_BY_EXCHANGES[exchange_id])
+                        _QUOTES_BY_EXCHANGES[exchange_id] = {};
 
-                    if(!_BASES_BY_EXCHANGES[exchange_id][m[2]])
-                        _BASES_BY_EXCHANGES[exchange_id][m[2]] = 0;
+                    if(!_QUOTES_BY_EXCHANGES[exchange_id][m[2]])
+                        _QUOTES_BY_EXCHANGES[exchange_id][m[2]] = 0;
 
-                    if(!_EXCHANGES_BY_BASES[m[2]])
-                        _EXCHANGES_BY_BASES[m[2]] = {};
+                    if(!_EXCHANGES_BY_QUOTES[m[2]])
+                        _EXCHANGES_BY_QUOTES[m[2]] = {};
 
-                    if(!_EXCHANGES_BY_BASES[m[2]][exchange_id])
-                        _EXCHANGES_BY_BASES[m[2]][exchange_id] = 0;
+                    if(!_EXCHANGES_BY_QUOTES[m[2]][exchange_id])
+                        _EXCHANGES_BY_QUOTES[m[2]][exchange_id] = 0;
 
 
                     _PRICES_BY_EXCHANGES['ASK'][m[2]][exchange_id][m[1]] = ticker['ask'];
@@ -310,8 +310,8 @@ async function getPrices(reload, do_not_create_progress_bar){
 
 
 
-                    _BASES_BY_EXCHANGES[exchange_id][m[2]]++;
-                    _EXCHANGES_BY_BASES[m[2]][exchange_id]++;
+                    _QUOTES_BY_EXCHANGES[exchange_id][m[2]]++;
+                    _EXCHANGES_BY_QUOTES[m[2]][exchange_id]++;
 
 
                 }
@@ -474,7 +474,7 @@ terminal.showLine();
 function mainSectionMenu(){
 
     terminal.nl();
-    terminal.showCentered('Main menu [' + _SELECTED_BASE +']', '-');
+    terminal.showCentered('Main menu [' + _SELECTED_QUOTE +']', '-');
     terminal.nl();
 
 
@@ -484,7 +484,7 @@ function mainSectionMenu(){
         "3. Balance - check out how much you have of what",
         "4. Cross-stock analysis",
         "5. Cross-currency analysis",
-        "6. Change base (active: "+_SELECTED_BASE+")",
+        "6. Change quote (active: "+_SELECTED_QUOTE+")",
         "7. Show BTC / USD chart (" + config.exchange_for_btc_usd.describe()['name'] + ")",
         "8. Refresh balances and prices",
         "9. Encrypt config",
@@ -528,7 +528,7 @@ async function mainSection(option){
             return;
 
         case 6:
-            changeBaseSection();
+            changeQuoteSection();
             return;
 
         case 7:
@@ -644,7 +644,7 @@ async function bitcoinPriceChart(){
     mainSection();
 }
 
-function priceChart(title, series, symbol, base, precision, timeStart, timeEnd){
+function priceChart(title, series, symbol, quote, precision, timeStart, timeEnd){
 
     terminal.nl();
     terminal.nl();
@@ -676,14 +676,14 @@ function priceChart(title, series, symbol, base, precision, timeStart, timeEnd){
     }
     let padding = '                ';
 
-    let baseRate = (symbol + ' = ' + base + lastPrice).green;
+    let quoteRate = (symbol + ' = ' + quote + lastPrice).green;
     let chart = asciichart.plot(series, { height: 15, format: function (x) {
-            return (padding + base + terminal.number_format(x, precision)).slice(-padding.length);
+            return (padding + quote + terminal.number_format(x, precision)).slice(-padding.length);
     } });
 
 
 
-    log.yellow ("\n" + chart,"\n", padding + '  '+baseRate, "\n",padding+"  Change "+terminal.niceTimeFormat((timeEnd - timeStart)/1000)+": ",difference, "\n");
+    log.yellow ("\n" + chart,"\n", padding + '  '+quoteRate, "\n",padding+"  Change "+terminal.niceTimeFormat((timeEnd - timeStart)/1000)+": ",difference, "\n");
 
     terminal.nl();
 
@@ -695,16 +695,16 @@ async function balanceSection(){
 
     terminal.nl();
     terminal.nl();
-    terminal.showCentered('Balances [' + _SELECTED_BASE + ']', '-');
+    terminal.showCentered('Balances [' + _SELECTED_QUOTE + ']', '-');
     terminal.nl();
 
     await getPricesAndBalances();
 
     terminal.nl();
     terminal.nl();
-    terminal.showCentered(_SELECTED_BASE+" TOTAL Balance: " + terminal.number_format(getArrayItem(_BALANCES_BY_COINS, _SELECTED_BASE, '_TOTAL', 'total'),8), ' ');
-    terminal.showCentered(_SELECTED_BASE+" Available Balance: " + terminal.number_format(getArrayItem(_BALANCES_BY_COINS, _SELECTED_BASE, '_TOTAL', 'free'),8), ' ');
-    terminal.showCentered(_SELECTED_BASE+" Locked Balance: " + terminal.number_format(getArrayItem(_BALANCES_BY_COINS, _SELECTED_BASE, '_TOTAL', 'used'),8),' ');
+    terminal.showCentered(_SELECTED_QUOTE+" TOTAL Balance: " + terminal.number_format(getArrayItem(_BALANCES_BY_COINS, _SELECTED_QUOTE, '_TOTAL', 'total'),8), ' ');
+    terminal.showCentered(_SELECTED_QUOTE+" Available Balance: " + terminal.number_format(getArrayItem(_BALANCES_BY_COINS, _SELECTED_QUOTE, '_TOTAL', 'free'),8), ' ');
+    terminal.showCentered(_SELECTED_QUOTE+" Locked Balance: " + terminal.number_format(getArrayItem(_BALANCES_BY_COINS, _SELECTED_QUOTE, '_TOTAL', 'used'),8),' ');
     terminal.nl();
 
     let t = new Table({
@@ -729,7 +729,7 @@ async function balanceSection(){
 
     let first_iteration = true;
 
-    let base_value_overall = 0;
+    let quote_value_overall = 0;
 
     let total_row = ['TOTAL',0,0];
 
@@ -752,7 +752,7 @@ async function balanceSection(){
             null,
         ];
 
-        let base_value_total = 0;
+        let quote_value_total = 0;
 
 
         let i = 3;
@@ -769,7 +769,7 @@ async function balanceSection(){
             if(coins[symbol])
                 coins_total = parseFloat(getArrayItem(coins,symbol,'total'));
 
-            if(!_BASES_BY_EXCHANGES[exchange_id] || !_BASES_BY_EXCHANGES[exchange_id][_SELECTED_BASE])
+            if(!_QUOTES_BY_EXCHANGES[exchange_id] || !_QUOTES_BY_EXCHANGES[exchange_id][_SELECTED_QUOTE])
                 continue;
 
             if (first_iteration) {
@@ -778,43 +778,43 @@ async function balanceSection(){
                 columns.push(exchange_details['name']);
             }
 
-            let base_value = coins_total;
+            let quote_value = coins_total;
 
 
-            if(symbol !== _SELECTED_BASE) {
+            if(symbol !== _SELECTED_QUOTE) {
 
                 let price_for_calculation = 0;
 
-                if(_PRICES_BY_EXCHANGES['BID'][_SELECTED_BASE][exchange_id][symbol])
-                    price_for_calculation = parseFloat(_PRICES_BY_EXCHANGES['BID'][_SELECTED_BASE][exchange_id][symbol]);
+                if(_PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE][exchange_id][symbol])
+                    price_for_calculation = parseFloat(_PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE][exchange_id][symbol]);
 
-                base_value *= price_for_calculation;
+                quote_value *= price_for_calculation;
             }
 
-            base_value_total += base_value;
+            quote_value_total += quote_value;
 
             if(!total_row[i])
                 total_row[i] = 0;
 
-            total_row[i++] += base_value;
+            total_row[i++] += quote_value;
 
-            if(symbol === _SELECTED_BASE)
-                row.push(terminal.number_format(coins_total,5)+' '+_SELECTED_BASE);
+            if(symbol === _SELECTED_QUOTE)
+                row.push(terminal.number_format(coins_total,5)+' '+_SELECTED_QUOTE);
             else
-                row.push(coins_total ? terminal.number_format(base_value, 3)+' '+_SELECTED_BASE : '-');
+                row.push(coins_total ? terminal.number_format(quote_value, 3)+' '+_SELECTED_QUOTE : '-');
 
         }
 
-        base_value_overall += base_value_total;
+        quote_value_overall += quote_value_total;
 
 
         first_iteration = false;
 
-        if(base_value_total < 0.001 && symbol !== _SELECTED_BASE)
+        if(quote_value_total < 0.001 && symbol !== _SELECTED_QUOTE)
             continue;
 
-        row[1] = terminal.number_format(total,3) + ' ('+ terminal.number_format(base_value_total, 3)+' '+_SELECTED_BASE+')';
-        row[2] = base_value_total;
+        row[1] = terminal.number_format(total,3) + ' ('+ terminal.number_format(quote_value_total, 3)+' '+_SELECTED_QUOTE+')';
+        row[2] = quote_value_total;
 
         data.push(row);
 
@@ -825,27 +825,27 @@ async function balanceSection(){
 
     data.sort(function(a, b) {
 
-        if(a[0] === _SELECTED_BASE)
+        if(a[0] === _SELECTED_QUOTE)
             return -1;
 
-        if(b[0] === _SELECTED_BASE)
+        if(b[0] === _SELECTED_QUOTE)
             return 1;
 
         return parseFloat(b[2]) - parseFloat(a[2]);
     });
 
     for(let row_id in data){
-        let percentage = data[row_id][2]/base_value_overall*100;
+        let percentage = data[row_id][2]/quote_value_overall*100;
         data[row_id][2] = terminal.number_format(percentage,1)+ '%';
         total_row[2] += percentage;
         t.push(data[row_id]);
     }
 
-    total_row[1] = terminal.number_format(base_value_overall, 5)+' '+_SELECTED_BASE;
+    total_row[1] = terminal.number_format(quote_value_overall, 5)+' '+_SELECTED_QUOTE;
     total_row[2] = terminal.number_format(total_row[2], 1)+'%';
 
     for(let i = 3; i < columns.length; i++){
-        total_row[i] = terminal.number_format(total_row[i], 3)+' '+_SELECTED_BASE;
+        total_row[i] = terminal.number_format(total_row[i], 3)+' '+_SELECTED_QUOTE;
     }
 
     t.push(total_row);
@@ -870,37 +870,36 @@ async function balanceSection(){
 
 }
 
-function changeBaseSectionMenu(){
+function changeQuoteSectionMenu(){
 
 
     terminal.nl();
-    terminal.writeLine("These bases are available on active stocks:");
+    terminal.writeLine("These quotes are available on active stocks:");
     terminal.nl();
 
-    let new_base = '';
+    let new_quote = '';
 
     let items = [];
 
-    //foreach ($_EXCHANGES_BY_BASES as $base => $exchanges) {
-    for (let base in _EXCHANGES_BY_BASES){
-        if(!_EXCHANGES_BY_BASES.hasOwnProperty(base))
+    for (let quote in _EXCHANGES_BY_QUOTES){
+        if(!_EXCHANGES_BY_QUOTES.hasOwnProperty(quote))
             continue;
 
-        terminal.write("\t- "+base+" (");
+        terminal.write("\t- "+quote+" (");
 
         let first_iteration = true;
 
-        items.push(base);
+        items.push(quote);
 
         //foreach ($exchanges as $exchange_id => $options) {
-        for(let exchange_id in _EXCHANGES_BY_BASES[base]) {
+        for(let exchange_id in _EXCHANGES_BY_QUOTES[quote]) {
 
 
-            if(!_EXCHANGES_BY_BASES[base].hasOwnProperty(exchange_id))
+            if(!_EXCHANGES_BY_QUOTES[quote].hasOwnProperty(exchange_id))
                 continue;
 
 
-            let options = _EXCHANGES_BY_BASES[base][exchange_id];
+            let options = _EXCHANGES_BY_QUOTES[quote][exchange_id];
 
             let exchange_details = config.exchanges[exchange_id].describe();
 
@@ -917,11 +916,11 @@ function changeBaseSectionMenu(){
 
     terminal.nl();
 
-    terminal.writeLine('What base would you like to use? ');
+    terminal.writeLine('What quote would you like to use? ');
 
     term.gridMenu( items , function( error , response ) {
 
-        changeBaseSection(response.selectedText);
+        changeQuoteSection(response.selectedText);
 
     } ) ;
 
@@ -935,9 +934,8 @@ function exchangeSelectCoinMenu(){
 
     let items = [];
 
-    //foreach ($_EXCHANGES_BY_BASES as $base => $exchanges) {
-    for (let coin in _PRICES_BY_COINS['BID'][_SELECTED_BASE]){
-        if(!_PRICES_BY_COINS['BID'][_SELECTED_BASE].hasOwnProperty(coin))
+    for (let coin in _PRICES_BY_COINS['BID'][_SELECTED_QUOTE]){
+        if(!_PRICES_BY_COINS['BID'][_SELECTED_QUOTE].hasOwnProperty(coin))
             continue;
 
         items.push(coin);
@@ -962,8 +960,8 @@ function exchangeSelectActionMenu(selected_coin){
     terminal.nl();
 
     let items = [
-        "1. Buy "+selected_coin+" for "+ _SELECTED_BASE,
-        "2. Sell "+selected_coin+" for "+ _SELECTED_BASE,
+        "1. Buy "+selected_coin+" for "+ _SELECTED_QUOTE,
+        "2. Sell "+selected_coin+" for "+ _SELECTED_QUOTE,
         "3. OHLCV charts",
         "4. Cancel open order",
         "5. Change coin",
@@ -1041,7 +1039,7 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
             if(!balance)
                 continue;
 
-            if (!config.exchanges.hasOwnProperty(exchange_id) || !_PRICES_BY_EXCHANGES['ASK'][_SELECTED_BASE] || !_PRICES_BY_EXCHANGES['ASK'][_SELECTED_BASE][exchange_id] || !_PRICES_BY_EXCHANGES['ASK'][_SELECTED_BASE][exchange_id][selected_coin] || balance < 0.0000001)
+            if (!config.exchanges.hasOwnProperty(exchange_id) || !_PRICES_BY_EXCHANGES['ASK'][_SELECTED_QUOTE] || !_PRICES_BY_EXCHANGES['ASK'][_SELECTED_QUOTE][exchange_id] || !_PRICES_BY_EXCHANGES['ASK'][_SELECTED_QUOTE][exchange_id][selected_coin] || balance < 0.0000001)
                 continue;
 
             items.push(exchange_id);
@@ -1049,7 +1047,7 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
 
         // we dont have any possible exchange -> error message and return to exchange
         if (items.length === 0) {
-            terminal.writeLine('No exchanges support '+selected_coin+'/'+_SELECTED_BASE);
+            terminal.writeLine('No exchanges support '+selected_coin+'/'+_SELECTED_QUOTE);
             exchangeSelectActionMenu(selected_coin);
             return;
         }
@@ -1086,13 +1084,13 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
         return;
     }
 
-    let min_bid_price = getArrayItem(_PRICES_BY_EXCHANGES, 'BID', _SELECTED_BASE, selected_exchange_id, selected_coin);
+    let min_bid_price = getArrayItem(_PRICES_BY_EXCHANGES, 'BID', _SELECTED_QUOTE, selected_exchange_id, selected_coin);
 
     if(selected_type === 'LIMIT' && !price){
         terminal.nl();
 
         // how much sell for
-        terminal.writeLine('How much do you want to sell for? The min ASK price is: '+terminal.number_format(min_bid_price, 8) +' '+_SELECTED_BASE);
+        terminal.writeLine('How much do you want to sell for? The min ASK price is: '+terminal.number_format(min_bid_price, 8) +' '+_SELECTED_QUOTE);
 
         term.inputField(
             function( error , input ) {
@@ -1130,13 +1128,13 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
 
     }
 
-    let market = config.exchanges[selected_exchange_id].market(selected_coin+'/'+_SELECTED_BASE);
+    let market = config.exchanges[selected_exchange_id].market(selected_coin+'/'+_SELECTED_QUOTE);
 
     // show prices
     if(!spend) {
         terminal.nl();
         terminal.showCentered(selected_coin + ' available balance: ' + terminal.number_format(getArrayItem(_BALANCES_BY_EXCHANGES, selected_exchange_id, selected_coin, 'free'), 8));
-        terminal.showCentered(selected_coin + ' price: ' + terminal.number_format(getArrayItem(_PRICES_BY_EXCHANGES, 'ASK', _SELECTED_BASE, selected_exchange_id, selected_coin), 8));
+        terminal.showCentered(selected_coin + ' price: ' + terminal.number_format(getArrayItem(_PRICES_BY_EXCHANGES, 'ASK', _SELECTED_QUOTE, selected_exchange_id, selected_coin), 8));
         terminal.showCentered(selected_coin + ' targeted price: ' + terminal.number_format(price, market.precision.price));
         terminal.nl();
         // how much spend
@@ -1156,10 +1154,10 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
 
                 spend = parseFloat(m[1]);
 
-                let totalBase = parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, selected_exchange_id, selected_coin, 'free'));
+                let totalQuote = parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, selected_exchange_id, selected_coin, 'free'));
 
                 if(m[2] && m[2] === '%'){
-                    spend = spend / 100 * totalBase;
+                    spend = spend / 100 * totalQuote;
                 }
 
                 if(spend < 0.001){
@@ -1168,7 +1166,7 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
                     return;
                 }
 
-                if(spend > totalBase){
+                if(spend > totalQuote){
                     terminal.writeLine('Amount too big.');
                     sellWizzard(selected_coin, selected_exchange_id, selected_type, price);
                     return;
@@ -1204,8 +1202,8 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
         terminal.showLine('=');
         terminal.showCentered('Exchange: ' + config.exchanges[selected_exchange_id].describe()['name']);
         terminal.showCentered('Order type : ' + selected_type);
-        terminal.showCentered('Market : ' + selected_coin + '/' + _SELECTED_BASE);
-        terminal.showCentered('SELL ' + terminal.number_format(spend, market.precision.amount) + ' ' + selected_coin + ' for ' + terminal.number_format(how_much_I_get, market.precision.price) + ' ' + _SELECTED_BASE + ' (' + terminal.number_format(parseFloat(price) / min_bid_price * 100, 2) + '% of min BID price)');
+        terminal.showCentered('Market : ' + selected_coin + '/' + _SELECTED_QUOTE);
+        terminal.showCentered('SELL ' + terminal.number_format(spend, market.precision.amount) + ' ' + selected_coin + ' for ' + terminal.number_format(how_much_I_get, market.precision.price) + ' ' + _SELECTED_QUOTE + ' (' + terminal.number_format(parseFloat(price) / min_bid_price * 100, 2) + '% of min BID price)');
         terminal.showLine('=');
         terminal.showLine('=');
 
@@ -1241,7 +1239,7 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
         progressBar.startItem('Sending');
 
         await APISleep(selected_exchange_id);
-        let order_details = await config.exchanges[selected_exchange_id].createOrder(selected_coin + '/' + _SELECTED_BASE, selected_type.toLowerCase(), 'sell', spend, price);
+        let order_details = await config.exchanges[selected_exchange_id].createOrder(selected_coin + '/' + _SELECTED_QUOTE, selected_type.toLowerCase(), 'sell', spend, price);
 
         progressBar.itemDone('Sending');
         progressBar.update(1);
@@ -1285,7 +1283,7 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
 
         // get list of possible exchanges (must support coin AND they must have fetchOHLCV)
         for (let exchange_id in config.exchanges) {
-            if (!config.exchanges.hasOwnProperty(exchange_id) || !_PRICES_BY_EXCHANGES['BID'][_SELECTED_BASE] || !_PRICES_BY_EXCHANGES['BID'][_SELECTED_BASE][exchange_id] || !_PRICES_BY_EXCHANGES['BID'][_SELECTED_BASE][exchange_id][selected_coin])
+            if (!config.exchanges.hasOwnProperty(exchange_id) || !_PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE] || !_PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE][exchange_id] || !_PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE][exchange_id][selected_coin])
                 continue;
 
             items.push(exchange_id);
@@ -1293,7 +1291,7 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
 
         // we dont have any possible exchange -> error message and return to exchange
         if (items.length === 0) {
-            terminal.writeLine('No exchanges support '+selected_coin+'/'+_SELECTED_BASE);
+            terminal.writeLine('No exchanges support '+selected_coin+'/'+_SELECTED_QUOTE);
             exchangeSelectActionMenu(selected_coin);
             return;
         }
@@ -1330,13 +1328,13 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
         return;
     }
 
-    let min_ask_price = getArrayItem(_PRICES_BY_EXCHANGES, 'ASK', _SELECTED_BASE, selected_exchange_id, selected_coin);
+    let min_ask_price = getArrayItem(_PRICES_BY_EXCHANGES, 'ASK', _SELECTED_QUOTE, selected_exchange_id, selected_coin);
 
     if(selected_type === 'LIMIT' && !price){
         terminal.nl();
         // how much spend
 
-        terminal.writeLine('How much do you want to pay? The min ASK price is: '+terminal.number_format(min_ask_price, 8) +' '+_SELECTED_BASE);
+        terminal.writeLine('How much do you want to pay? The min ASK price is: '+terminal.number_format(min_ask_price, 8) +' '+_SELECTED_QUOTE);
 
         term.inputField(
             function( error , input ) {
@@ -1374,17 +1372,17 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
 
     }
 
-    let market = config.exchanges[selected_exchange_id].market(selected_coin+'/'+_SELECTED_BASE);
+    let market = config.exchanges[selected_exchange_id].market(selected_coin+'/'+_SELECTED_QUOTE);
 
     // show prices
     if(!spend) {
         terminal.nl();
-        terminal.showCentered(_SELECTED_BASE + ' available balance: ' + terminal.number_format(getArrayItem(_BALANCES_BY_EXCHANGES, selected_exchange_id, _SELECTED_BASE, 'free'), 8));
-        terminal.showCentered(selected_coin + ' price: ' + terminal.number_format(getArrayItem(_PRICES_BY_EXCHANGES, 'ASK', _SELECTED_BASE, selected_exchange_id, selected_coin), 8));
+        terminal.showCentered(_SELECTED_QUOTE + ' available balance: ' + terminal.number_format(getArrayItem(_BALANCES_BY_EXCHANGES, selected_exchange_id, _SELECTED_QUOTE, 'free'), 8));
+        terminal.showCentered(selected_coin + ' price: ' + terminal.number_format(getArrayItem(_PRICES_BY_EXCHANGES, 'ASK', _SELECTED_QUOTE, selected_exchange_id, selected_coin), 8));
         terminal.nl();
         // how much spend
 
-        terminal.writeLine('How much do you want to spend? You can enter '+_SELECTED_BASE+' amount or %:');
+        terminal.writeLine('How much do you want to spend? You can enter '+_SELECTED_QUOTE+' amount or %:');
 
         term.inputField(
             function( error , input ) {
@@ -1399,10 +1397,10 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
 
                 spend = parseFloat(m[1]);
 
-                let totalBase = parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, selected_exchange_id, _SELECTED_BASE, 'free'));
+                let totalQuote = parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, selected_exchange_id, _SELECTED_QUOTE, 'free'));
 
                 if(m[2] && m[2] === '%'){
-                    spend = spend / 100 * totalBase;
+                    spend = spend / 100 * totalQuote;
                 }
 
                 if(spend < 0.001){
@@ -1411,7 +1409,7 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
                     return;
                 }
 
-                if(spend > totalBase){
+                if(spend > totalQuote){
                     terminal.writeLine('Amount too big.');
                     buyWizzard(selected_coin, selected_exchange_id, selected_type, price);
                     return;
@@ -1444,8 +1442,8 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
         terminal.showLine('=');
         terminal.showCentered('Exchange: ' + config.exchanges[selected_exchange_id].describe()['name']);
         terminal.showCentered('Order type : ' + selected_type);
-        terminal.showCentered('Market : ' + selected_coin + '/' + _SELECTED_BASE);
-        terminal.showCentered('BUY ' + terminal.number_format(how_much_I_get, market.precision.amount) + ' ' + selected_coin + ' for ' + terminal.number_format(spend, market.precision.price) + ' ' + _SELECTED_BASE + ' (' + terminal.number_format(parseFloat(price) / min_ask_price * 100, 2) + '% of min ASK price)');
+        terminal.showCentered('Market : ' + selected_coin + '/' + _SELECTED_QUOTE);
+        terminal.showCentered('BUY ' + terminal.number_format(how_much_I_get, market.precision.amount) + ' ' + selected_coin + ' for ' + terminal.number_format(spend, market.precision.price) + ' ' + _SELECTED_QUOTE + ' (' + terminal.number_format(parseFloat(price) / min_ask_price * 100, 2) + '% of min ASK price)');
         terminal.showLine('=');
         terminal.showLine('=');
 
@@ -1487,7 +1485,7 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
         }
 
         await APISleep(selected_exchange_id);
-        let order_details = await config.exchanges[selected_exchange_id].createOrder(selected_coin + '/' + _SELECTED_BASE, selected_type.toLowerCase(), 'buy', how_much_I_get, price, params);
+        let order_details = await config.exchanges[selected_exchange_id].createOrder(selected_coin + '/' + _SELECTED_QUOTE, selected_type.toLowerCase(), 'buy', how_much_I_get, price, params);
 
         progressBar.itemDone('Sending');
         progressBar.update(1);
@@ -1573,10 +1571,10 @@ async function exchangeCancelOrder(selected_coin, selected_exchange_id, selected
     if(!selected_exchange_id) {
         let items = [];
 
-        if(_OPEN_ORDERS.hasOwnProperty(selected_coin+'/'+_SELECTED_BASE)) {
+        if(_OPEN_ORDERS.hasOwnProperty(selected_coin+'/'+_SELECTED_QUOTE)) {
             // get list of possible exchanges (must support coin AND they must have fetchOHLCV)
-            for (let exchange_id in _OPEN_ORDERS[selected_coin + '/' + _SELECTED_BASE]) {
-                if (!_OPEN_ORDERS[selected_coin + '/' + _SELECTED_BASE].hasOwnProperty(exchange_id))
+            for (let exchange_id in _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE]) {
+                if (!_OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE].hasOwnProperty(exchange_id))
                     continue;
 
                 items.push(exchange_id);
@@ -1603,10 +1601,10 @@ async function exchangeCancelOrder(selected_coin, selected_exchange_id, selected
     if(!selected_order_id) {
         let items = [];
 
-        if(_OPEN_ORDERS[selected_coin+'/'+_SELECTED_BASE].hasOwnProperty(selected_exchange_id)) {
+        if(_OPEN_ORDERS[selected_coin+'/'+_SELECTED_QUOTE].hasOwnProperty(selected_exchange_id)) {
             // get list of possible exchanges (must support coin AND they must have fetchOHLCV)
-            for (let order_id in _OPEN_ORDERS[selected_coin + '/' + _SELECTED_BASE][selected_exchange_id]) {
-                if (!_OPEN_ORDERS[selected_coin + '/' + _SELECTED_BASE][selected_exchange_id].hasOwnProperty(order_id))
+            for (let order_id in _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id]) {
+                if (!_OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id].hasOwnProperty(order_id))
                     continue;
 
                 items.push(order_id);
@@ -1634,20 +1632,20 @@ async function exchangeCancelOrder(selected_coin, selected_exchange_id, selected
     if(!execute){
 
 
-        let market = config.exchanges[selected_exchange_id].market(selected_coin+'/'+_SELECTED_BASE);
+        let market = config.exchanges[selected_exchange_id].market(selected_coin+'/'+_SELECTED_QUOTE);
 
         terminal.nl();
         terminal.showLine('=');
         terminal.showLine('=');
         terminal.showCentered('Exchange: ' + config.exchanges[selected_exchange_id].describe()['name']);
         terminal.showCentered('Order ID : ' + selected_order_id);
-        terminal.showCentered('Side : ' + _OPEN_ORDERS[selected_coin + '/' + _SELECTED_BASE][selected_exchange_id][selected_order_id]['side'].toUpperCase());
-        terminal.showCentered('Symbol : ' + _OPEN_ORDERS[selected_coin + '/' + _SELECTED_BASE][selected_exchange_id][selected_order_id]['symbol']);
-        terminal.showCentered('Type : ' + _OPEN_ORDERS[selected_coin + '/' + _SELECTED_BASE][selected_exchange_id][selected_order_id]['type'].toUpperCase());
-        terminal.showCentered('Price : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_BASE][selected_exchange_id][selected_order_id]['price'],market.precision.price) + ' ' + _SELECTED_BASE);
-        terminal.showCentered('Cost : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_BASE][selected_exchange_id][selected_order_id]['cost'],market.precision.price) + ' ' + _SELECTED_BASE);
-        terminal.showCentered('Amount : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_BASE][selected_exchange_id][selected_order_id]['amount'],market.precision.amount) + ' ' + selected_coin);
-        terminal.showCentered('Filled : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_BASE][selected_exchange_id][selected_order_id]['filled'],market.precision.amount) + ' ' + selected_coin);
+        terminal.showCentered('Side : ' + _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['side'].toUpperCase());
+        terminal.showCentered('Symbol : ' + _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['symbol']);
+        terminal.showCentered('Type : ' + _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['type'].toUpperCase());
+        terminal.showCentered('Price : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['price'],market.precision.price) + ' ' + _SELECTED_QUOTE);
+        terminal.showCentered('Cost : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['cost'],market.precision.price) + ' ' + _SELECTED_QUOTE);
+        terminal.showCentered('Amount : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['amount'],market.precision.amount) + ' ' + selected_coin);
+        terminal.showCentered('Filled : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['filled'],market.precision.amount) + ' ' + selected_coin);
         terminal.showLine('=');
         terminal.showLine('=');
 
@@ -1684,7 +1682,7 @@ async function exchangeCancelOrder(selected_coin, selected_exchange_id, selected
         progressBar.startItem('Sending');
 
         await APISleep(selected_exchange_id);
-        await config.exchanges[selected_exchange_id].cancelOrder(selected_order_id, _OPEN_ORDERS[selected_coin + '/' + _SELECTED_BASE][selected_exchange_id][selected_order_id]['symbol']);
+        await config.exchanges[selected_exchange_id].cancelOrder(selected_order_id, _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['symbol']);
 
         progressBar.itemDone('Sending');
         progressBar.update(1);
@@ -1723,7 +1721,7 @@ async function exchangeOHLCVMenu(selected_coin, selected_exchange_id, selected_t
 
         // get list of possible exchanges (must support coin AND they must have fetchOHLCV)
         for (let exchange_id in config.exchanges) {
-            if (!config.exchanges.hasOwnProperty(exchange_id) || !config.exchanges[exchange_id].hasFetchOHLCV || !_PRICES_BY_EXCHANGES['BID'][_SELECTED_BASE] || !_PRICES_BY_EXCHANGES['BID'][_SELECTED_BASE][exchange_id] || !_PRICES_BY_EXCHANGES['BID'][_SELECTED_BASE][exchange_id][selected_coin])
+            if (!config.exchanges.hasOwnProperty(exchange_id) || !config.exchanges[exchange_id].hasFetchOHLCV || !_PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE] || !_PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE][exchange_id] || !_PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE][exchange_id][selected_coin])
                 continue;
 
             items.push(exchange_id);
@@ -1798,7 +1796,7 @@ async function exchangeOHLCVMenu(selected_coin, selected_exchange_id, selected_t
         let since = (Date.now() - (getTimeFrameSeconds(selected_time_frame)*96*1000));
 
         await APISleep(selected_exchange_id);
-        let ohlcv = await config.exchanges[selected_exchange_id].fetchOHLCV(selected_coin + '/' + _SELECTED_BASE, selected_time_frame, since, 96,params);
+        let ohlcv = await config.exchanges[selected_exchange_id].fetchOHLCV(selected_coin + '/' + _SELECTED_QUOTE, selected_time_frame, since, 96,params);
 
         progressBar.itemDone('fetching OHLCV');
 
@@ -1814,7 +1812,7 @@ async function exchangeOHLCVMenu(selected_coin, selected_exchange_id, selected_t
             terminal.writeLine('There is not enough data to show a full chart');
             terminal.nl();
         }else{
-            priceChart(terminal.niceTimeFormat(ohlcv_seconds * 96) + ' (Interval: ' + terminal.niceTimeFormat(ohlcv_seconds) + ') ' + selected_coin + ' / ' + _SELECTED_BASE + ' (' + config.exchanges[selected_exchange_id].describe()['name'] + ')', series, selected_coin, _SELECTED_BASE === 'BTC' ? '฿' : _SELECTED_BASE, 8, ohlcv_time_start, ohlcv_time_end);
+            priceChart(terminal.niceTimeFormat(ohlcv_seconds * 96) + ' (Interval: ' + terminal.niceTimeFormat(ohlcv_seconds) + ') ' + selected_coin + ' / ' + _SELECTED_QUOTE + ' (' + config.exchanges[selected_exchange_id].describe()['name'] + ')', series, selected_coin, _SELECTED_QUOTE === 'BTC' ? '฿' : _SELECTED_QUOTE, 8, ohlcv_time_start, ohlcv_time_end);
         }
     }catch(e){
         console.log(e);
@@ -1833,7 +1831,7 @@ async function crossStockSection(){
 
 
     terminal.nl();
-    terminal.showCentered('['+ _SELECTED_BASE+'] Cross-stock analysis '+getYmdHisDate(), '-');
+    terminal.showCentered('['+ _SELECTED_QUOTE+'] Cross-stock analysis '+getYmdHisDate(), '-');
     terminal.nl();
 
     await getPrices();
@@ -1843,12 +1841,12 @@ async function crossStockSection(){
 
     let columns = ['Coin'];
 
-    for(let exchange_id in _PRICES_BY_EXCHANGES['BID'][_SELECTED_BASE]){
+    for(let exchange_id in _PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE]){
 
-        if(!_PRICES_BY_EXCHANGES['BID'][_SELECTED_BASE].hasOwnProperty(exchange_id))
+        if(!_PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE].hasOwnProperty(exchange_id))
             continue;
 
-        let coins = _PRICES_BY_EXCHANGES['BID'][_SELECTED_BASE][exchange_id];
+        let coins = _PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE][exchange_id];
 
         for (let coin in coins){
 
@@ -1863,12 +1861,12 @@ async function crossStockSection(){
         }
     }
 
-    for (let exchange_id in _PRICES_BY_EXCHANGES['ASK'][_SELECTED_BASE]){
+    for (let exchange_id in _PRICES_BY_EXCHANGES['ASK'][_SELECTED_QUOTE]){
 
-        if(!_PRICES_BY_EXCHANGES['ASK'][_SELECTED_BASE].hasOwnProperty(exchange_id))
+        if(!_PRICES_BY_EXCHANGES['ASK'][_SELECTED_QUOTE].hasOwnProperty(exchange_id))
             continue;
 
-        let coins = _PRICES_BY_EXCHANGES['ASK'][_SELECTED_BASE][exchange_id];
+        let coins = _PRICES_BY_EXCHANGES['ASK'][_SELECTED_QUOTE][exchange_id];
 
         for (let coin in coins){
 
@@ -1911,8 +1909,8 @@ async function crossStockSection(){
                     columns.push(exchange_details['name']);
                 }
 
-                let priceBid = getArrayItem(_PRICES_BY_EXCHANGES, 'BID', _SELECTED_BASE, exchange_id, coin);
-                let priceAsk = getArrayItem(_PRICES_BY_EXCHANGES, 'ASK', _SELECTED_BASE, exchange_id, coin);
+                let priceBid = getArrayItem(_PRICES_BY_EXCHANGES, 'BID', _SELECTED_QUOTE, exchange_id, coin);
+                let priceAsk = getArrayItem(_PRICES_BY_EXCHANGES, 'ASK', _SELECTED_QUOTE, exchange_id, coin);
 
                 if(!priceBid)
                     row.push('-');
@@ -2008,8 +2006,8 @@ async function crossCurrencySection(){
     let A_B_ratios = {};
     let B_A_ratios = {};
     // now find what coins we have in common
-    for(let exchange_id in _EXCHANGES_BY_BASES[cross_currency_A]){
-        if(_EXCHANGES_BY_BASES[cross_currency_B][exchange_id]){
+    for(let exchange_id in _EXCHANGES_BY_QUOTES[cross_currency_A]){
+        if(_EXCHANGES_BY_QUOTES[cross_currency_B][exchange_id]){
             // this exchange can be used
             available_exchanges.push(exchange_id);
             common_coins[exchange_id] = {};
@@ -2132,7 +2130,7 @@ async function exchangeSection(selected_coin, reload){
     if(!selected_coin) {
         terminal.nl();
         terminal.nl();
-        terminal.showCentered('['+ _SELECTED_BASE+'] Exchange '+getYmdHisDate(), '-');
+        terminal.showCentered('['+ _SELECTED_QUOTE+'] Exchange '+getYmdHisDate(), '-');
         terminal.nl();
 
         exchangeSelectCoinMenu();
@@ -2141,22 +2139,22 @@ async function exchangeSection(selected_coin, reload){
 
     terminal.nl();
 
-    if(!_PRICES_BY_COINS['BID'][_SELECTED_BASE].hasOwnProperty(selected_coin)){
-        terminal.writeLine("Cannot find any stock for "+ selected_coin + "/" +_SELECTED_BASE);
+    if(!_PRICES_BY_COINS['BID'][_SELECTED_QUOTE].hasOwnProperty(selected_coin)){
+        terminal.writeLine("Cannot find any stock for "+ selected_coin + "/" +_SELECTED_QUOTE);
         exchangeSelectCoinMenu();
         return;
     }
 
-    //console.log(_PRICES_BY_COINS['BID'][_SELECTED_BASE][selected_coin]);
+    //console.log(_PRICES_BY_COINS['BID'][_SELECTED_QUOTE][selected_coin]);
 
     let progress_bar_items = 2;
 
-    createProgressBar(160, 'Fetching '+selected_coin+'/'+_SELECTED_BASE+'', progress_bar_items);
+    createProgressBar(160, 'Fetching '+selected_coin+'/'+_SELECTED_QUOTE+'', progress_bar_items);
 
     progressBar.startItem('calculating');
     selected_coin = selected_coin.toUpperCase();
 
-    let columns = ['Exchange', 'Change', 'Ask', 'Bid', 'Volume', 'Owned', 'Owned available', _SELECTED_BASE + ' available'];
+    let columns = ['Exchange', 'Change', 'Ask', 'Bid', 'Volume', 'Owned', 'Owned available', _SELECTED_QUOTE + ' available'];
 
     let columns_orders = ['Time', 'Exchange', 'Side','Symbol', 'ID', 'Type', 'Price', 'Cost', 'Amount', 'Filled'];
 
@@ -2173,12 +2171,12 @@ async function exchangeSection(selected_coin, reload){
 
     _OPEN_ORDERS = {};
 
-    for (let exchange_id in _PRICES_BY_COINS['BID'][_SELECTED_BASE][selected_coin]){
+    for (let exchange_id in _PRICES_BY_COINS['BID'][_SELECTED_QUOTE][selected_coin]){
 
-        if(!_PRICES_BY_COINS['BID'][_SELECTED_BASE][selected_coin].hasOwnProperty(exchange_id))
+        if(!_PRICES_BY_COINS['BID'][_SELECTED_QUOTE][selected_coin].hasOwnProperty(exchange_id))
             continue;
 
-        if(!config.exchanges[exchange_id].markets[selected_coin+'/'+_SELECTED_BASE]['active'])
+        if(!config.exchanges[exchange_id].markets[selected_coin+'/'+_SELECTED_QUOTE]['active'])
             continue;
 
         // fetch tickers
@@ -2191,7 +2189,7 @@ async function exchangeSection(selected_coin, reload){
 
             await APISleep(exchange_id);
 
-            return await config.exchanges[exchange_id].fetch_ticker(selected_coin+'/'+_SELECTED_BASE);
+            return await config.exchanges[exchange_id].fetch_ticker(selected_coin+'/'+_SELECTED_QUOTE);
         })();
 
         progressBar.update({items: ++progress_bar_items});
@@ -2202,25 +2200,25 @@ async function exchangeSection(selected_coin, reload){
 
             await APISleep(exchange_id);
 
-            return await config.exchanges[exchange_id].fetchOpenOrders(selected_coin+'/'+_SELECTED_BASE);
+            return await config.exchanges[exchange_id].fetchOpenOrders(selected_coin+'/'+_SELECTED_QUOTE);
         })();
 
         promise.then(function(ticker){
             progressBar.itemDone('fetching '+exchange_id+' ticker');
 
 
-            let base_value = parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, selected_coin, 'total'));
-            let base_free_value = parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, selected_coin, 'free'));
+            let quote_value = parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, selected_coin, 'total'));
+            let quote_free_value = parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, selected_coin, 'free'));
 
-            if(selected_coin !== _SELECTED_BASE) {
-                base_value *= parseFloat(getArrayItem(_PRICES_BY_EXCHANGES, 'BID', _SELECTED_BASE, exchange_id, selected_coin));
-                base_free_value *= parseFloat(getArrayItem(_PRICES_BY_EXCHANGES, 'BID', _SELECTED_BASE, exchange_id, selected_coin));
+            if(selected_coin !== _SELECTED_QUOTE) {
+                quote_value *= parseFloat(getArrayItem(_PRICES_BY_EXCHANGES, 'BID', _SELECTED_QUOTE, exchange_id, selected_coin));
+                quote_free_value *= parseFloat(getArrayItem(_PRICES_BY_EXCHANGES, 'BID', _SELECTED_QUOTE, exchange_id, selected_coin));
             }
 
             let volume = ticker['quoteVolume'];
 
             if(!volume)
-                volume = ticker['baseVolume'] * parseFloat(getArrayItem(_PRICES_BY_EXCHANGES, 'BID', _SELECTED_BASE, exchange_id, selected_coin));
+                volume = ticker['baseVolume'] * parseFloat(getArrayItem(_PRICES_BY_EXCHANGES, 'BID', _SELECTED_QUOTE, exchange_id, selected_coin));
 
             if(volume > highest_volume){
                 highest_volume_exchange_id = exchange_id;
@@ -2230,12 +2228,12 @@ async function exchangeSection(selected_coin, reload){
             data.push([
                 exchange_details['name'],
                 terminal.number_format(ticker['change'],1)+"%",
-                terminal.number_format(ticker['ask'],8)+" "+_SELECTED_BASE,
-                terminal.number_format(ticker['bid'],8)+" "+_SELECTED_BASE,
-                terminal.number_format(volume,8)+" "+_SELECTED_BASE,
-                base_value ? terminal.number_format( parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, selected_coin, 'total')),3)+' ('+terminal.number_format(base_value, 3)+' '+_SELECTED_BASE+')' : '-',
-                base_value ? terminal.number_format( parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, selected_coin, 'free')),3)+' ('+terminal.number_format(base_free_value, 3)+' '+_SELECTED_BASE+')' : '-',
-                terminal.number_format( parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, _SELECTED_BASE, 'free')), 3) + ' ' + _SELECTED_BASE
+                terminal.number_format(ticker['ask'],8)+" "+_SELECTED_QUOTE,
+                terminal.number_format(ticker['bid'],8)+" "+_SELECTED_QUOTE,
+                terminal.number_format(volume,8)+" "+_SELECTED_QUOTE,
+                quote_value ? terminal.number_format( parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, selected_coin, 'total')),3)+' ('+terminal.number_format(quote_value, 3)+' '+_SELECTED_QUOTE+')' : '-',
+                quote_value ? terminal.number_format( parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, selected_coin, 'free')),3)+' ('+terminal.number_format(quote_free_value, 3)+' '+_SELECTED_QUOTE+')' : '-',
+                terminal.number_format( parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, _SELECTED_QUOTE, 'free')), 3) + ' ' + _SELECTED_QUOTE
             ]);
 
         }).catch(function(err){
@@ -2338,6 +2336,18 @@ async function exchangeSection(selected_coin, reload){
 
     t.push(columns);
 
+
+    data.sort(function(a, b) {
+        if (a[0] < b[0])
+            return -1;
+
+        if ( a[0] > b[0])
+            return 1;
+
+        return 0;
+    });
+
+
     for(let row_id in data){
         t.push(data[row_id]);
     }
@@ -2351,7 +2361,7 @@ async function exchangeSection(selected_coin, reload){
     );
 
     terminal.nl();
-    terminal.showCentered('Showing rates for '+ selected_coin+'/'+_SELECTED_BASE);
+    terminal.showCentered('Showing rates for '+ selected_coin+'/'+_SELECTED_QUOTE);
 
     terminal.writeLine("\n" + t);
 
@@ -2373,6 +2383,27 @@ async function exchangeSection(selected_coin, reload){
 
     t.push(columns_orders);
 
+
+
+    data_orders.sort(function(a, b) {
+        // sort by exchange first (ASC)
+        if (a[1] < b[1])
+            return -1;
+
+        if ( a[1] > b[1])
+            return 1;
+
+        // if we have orders from same exchange then sort by timestamp (DESC)
+        if (a[0] > b[0])
+            return -1;
+
+        if ( a[0] < b[0])
+            return 1;
+
+        return 0;
+    });
+
+
     for(let row_id in data_orders){
         t.push(data_orders[row_id]);
     }
@@ -2387,12 +2418,12 @@ async function exchangeSection(selected_coin, reload){
 
     if(data_orders.length > 0) {
         terminal.nl();
-        terminal.showCentered('Open orders for ' + selected_coin + '/' + _SELECTED_BASE);
+        terminal.showCentered('Open orders for ' + selected_coin + '/' + _SELECTED_QUOTE);
 
         terminal.writeLine("\n" + t);
     }else{
         terminal.nl();
-        terminal.showCentered('No Open orders for ' + selected_coin + '/' + _SELECTED_BASE);
+        terminal.showCentered('No Open orders for ' + selected_coin + '/' + _SELECTED_QUOTE);
     }
 
     exchangeSelectActionMenu(selected_coin);
@@ -2400,24 +2431,24 @@ async function exchangeSection(selected_coin, reload){
 }
 
 
-async function changeBaseSection(new_base){
+async function changeQuoteSection(new_quote){
 
     await getPrices(false);
 
-    if(!new_base) {
-        changeBaseSectionMenu();
+    if(!new_quote) {
+        changeQuoteSectionMenu();
         return;
     }
 
-    new_base = new_base.toUpperCase();
+    new_quote = new_quote.toUpperCase();
 
-    if(!_EXCHANGES_BY_BASES[new_base]){
-        terminal.writeLine("Base "+new_base+" is not supported on any of active stocks");
-        changeBaseSection();
+    if(!_EXCHANGES_BY_QUOTES[new_quote]){
+        terminal.writeLine("Quote "+new_quote+" is not supported on any of active stocks");
+        changeQuoteSection();
         return;
     }else{
-        _SELECTED_BASE = new_base;
-        terminal.writeLine("SUCCESS: Base changed to "+new_base);
+        _SELECTED_QUOTE = new_quote;
+        terminal.writeLine("SUCCESS: Quote changed to "+new_quote);
     }
 
     mainSection();
@@ -2428,8 +2459,8 @@ async function changeBaseSection(new_base){
 let initFunction = function() {
 
 
-    if(command_line_options.base) {
-        _SELECTED_BASE = command_line_options.base;
+    if(command_line_options.quote) {
+        _SELECTED_QUOTE = command_line_options.quote;
     }
 
     if(command_line_options.balance){
