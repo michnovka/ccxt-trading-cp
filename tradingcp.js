@@ -823,6 +823,17 @@ async function balanceSection(){
 
     t.push(columns);
 
+    data.sort(function(a, b) {
+
+        if(a[0] === _SELECTED_BASE)
+            return -1;
+
+        if(b[0] === _SELECTED_BASE)
+            return 1;
+
+        return parseFloat(b[2]) - parseFloat(a[2]);
+    });
+
     for(let row_id in data){
         let percentage = data[row_id][2]/base_value_overall*100;
         data[row_id][2] = terminal.number_format(percentage,1)+ '%';
