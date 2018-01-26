@@ -12,6 +12,7 @@ let config = require('./config-reader.js');
 const commandLineOptionDefinitions = [
     { name: 'quote', alias: 'q', type: String, typeLabel: '[underline]{QUOTE}', description: 'This defines quote for markets (we trade in this currency)' },
     { name: 'balance', alias: 'b', type: Boolean, description: 'Go to balance overview' },
+    { name: 'currency', alias: 'c', type: String, typeLabel: '[underline]{CURRENCY}', description: 'Currency for coin market cap (USD, EUR, CNY,...). Defult is USD' },
     { name: 'crossstock', type: Boolean, description: 'Go to cross-stock analysis' },
     { name: 'crosscurrency', type: Boolean, description: 'Go to cross-currency analysis' },
     { name: 'btcusd', type: Boolean, description: 'Show BTC / USD price' },
@@ -56,6 +57,7 @@ const command_line_options = cmo;
 // -----------------------------------------------------------------------------------------------------
 
 let _SELECTED_QUOTE = 'BTC';
+let _SELECTED_CURRENCY = 'USD';
 let _BALANCES_BY_COINS = {};
 let _BALANCES_BY_EXCHANGES = {};
 let _PRICES_BY_EXCHANGES = {};
@@ -1713,10 +1715,10 @@ async function exchangeCancelOrder(selected_coin, selected_exchange_id, selected
 }
 
 
-async function exchangeOHLCVMenu(selected_coin, selected_exchange_id, selected_time_frame, do_not_return_to_exchange_menu, do_not_create_progress_bar){
+async function exchangeOHLCVMenu(selected_coin, selected_exchange_id, selected_time_frame, do_not_return_to_exchange_menu, do_not_create_progress_bar, return_function_that_draws) {
     // what exchange?
 
-    if(!selected_exchange_id) {
+    if (!selected_exchange_id) {
         let items = [];
 
         // get list of possible exchanges (must support coin AND they must have fetchOHLCV)
@@ -1744,10 +1746,10 @@ async function exchangeOHLCVMenu(selected_coin, selected_exchange_id, selected_t
         return;
     }
 
-    if(!config.exchanges[selected_exchange_id].hasFetchOHLCV)
+    if (!config.exchanges[selected_exchange_id].hasFetchOHLCV)
         return;
 
-    if(!selected_time_frame){
+    if (!selected_time_frame) {
         let items = [];
         let items_ids = [];
 
@@ -1760,7 +1762,7 @@ async function exchangeOHLCVMenu(selected_coin, selected_exchange_id, selected_t
 
             let time_frame_seconds = getTimeFrameSeconds(config.exchanges[selected_exchange_id].timeframes[time_frame]);
 
-            items.push(time_frame+' '+terminal.niceTimeFormat(time_frame_seconds) + ' (Period: ' + terminal.niceTimeFormat(time_frame_seconds*96) + ')');
+            items.push(time_frame + ' ' + terminal.niceTimeFormat(time_frame_seconds) + ' (Period: ' + terminal.niceTimeFormat(time_frame_seconds * 96) + ')');
         }
 
         // we dont have any possible exchange -> error message and return to exchange
@@ -1781,7 +1783,7 @@ async function exchangeOHLCVMenu(selected_coin, selected_exchange_id, selected_t
 
     }
 
-    if(!do_not_create_progress_bar)
+    if (!do_not_create_progress_bar)
         createProgressBar(160, 'OHLCV', 1);
 
     try {
@@ -1790,13 +1792,13 @@ async function exchangeOHLCVMenu(selected_coin, selected_exchange_id, selected_t
 
         let params = {};
 
-        if(selected_exchange_id === 'bitfinex')
+        if (selected_exchange_id === 'bitfinex')
             params.sort = 1;
 
-        let since = (Date.now() - (getTimeFrameSeconds(selected_time_frame)*96*1000));
+        let since = (Date.now() - (getTimeFrameSeconds(selected_time_frame) * 96 * 1000));
 
         await APISleep(selected_exchange_id);
-        let ohlcv = await config.exchanges[selected_exchange_id].fetchOHLCV(selected_coin + '/' + _SELECTED_QUOTE, selected_time_frame, since, 96,params);
+        let ohlcv = await config.exchanges[selected_exchange_id].fetchOHLCV(selected_coin + '/' + _SELECTED_QUOTE, selected_time_frame, since, 96, params);
 
         progressBar.itemDone('fetching OHLCV');
 
@@ -1807,24 +1809,30 @@ async function exchangeOHLCVMenu(selected_coin, selected_exchange_id, selected_t
 
         let series = ohlcv.map(x => x[4]);        // index = [ timestamp, open, high, low, close, volume ]
 
-        if(series.length < 10){
+        if (series.length < 10) {
             terminal.clearLine();
             terminal.writeLine('There is not enough data to show a full chart');
             terminal.nl();
-        }else{
-            priceChart(terminal.niceTimeFormat(ohlcv_seconds * 96) + ' (Interval: ' + terminal.niceTimeFormat(ohlcv_seconds) + ') ' + selected_coin + ' / ' + _SELECTED_QUOTE + ' (' + config.exchanges[selected_exchange_id].describe()['name'] + ')', series, selected_coin, _SELECTED_QUOTE === 'BTC' ? '฿' : _SELECTED_QUOTE, 8, ohlcv_time_start, ohlcv_time_end);
+        } else {
+            if(return_function_that_draws){
+                return function(){
+                    priceChart(terminal.niceTimeFormat(ohlcv_seconds * 96) + ' (Interval: ' + terminal.niceTimeFormat(ohlcv_seconds) + ') ' + selected_coin + ' / ' + _SELECTED_QUOTE + ' (' + config.exchanges[selected_exchange_id].describe()['name'] + ')', series, selected_coin, _SELECTED_QUOTE === 'BTC' ? '฿' : _SELECTED_QUOTE, 8, ohlcv_time_start, ohlcv_time_end);
+                };
+            }else{
+                priceChart(terminal.niceTimeFormat(ohlcv_seconds * 96) + ' (Interval: ' + terminal.niceTimeFormat(ohlcv_seconds) + ') ' + selected_coin + ' / ' + _SELECTED_QUOTE + ' (' + config.exchanges[selected_exchange_id].describe()['name'] + ')', series, selected_coin, _SELECTED_QUOTE === 'BTC' ? '฿' : _SELECTED_QUOTE, 8, ohlcv_time_start, ohlcv_time_end);
+            }
         }
-    }catch(e){
+    } catch (e) {
         console.log(e);
     }
 
-    if(!do_not_create_progress_bar)
+    if (!do_not_create_progress_bar) {
         progressBar.stop();
 
-    terminal.nl();
+        terminal.nl();
 
-    if(!do_not_return_to_exchange_menu)
         exchangeSelectActionMenu(selected_coin);
+    }
 }
 
 async function crossStockSection(){
@@ -2308,15 +2316,56 @@ async function exchangeSection(selected_coin, reload){
     }
 
     progressBar.itemDone('calculating');
+    let ohlcv_promise = null;
 
     if(config.exchanges.hasOwnProperty(highest_volume_exchange_id) && config.exchanges[highest_volume_exchange_id].hasOwnProperty('hasFetchOHLCV')) {
-        await exchangeOHLCVMenu(selected_coin, highest_volume_exchange_id, '15m', true, true);
+        ohlcv_promise = exchangeOHLCVMenu(selected_coin, highest_volume_exchange_id, '15m', true, true, true);
     }
+
+    progressBar.update({items: ++progress_bar_items});
+    progressBar.startItem('fetching coinmarketcap');
+
+    let coinmarketcap_promise = config.coinmarketcap.fetchTicker(selected_coin+'/'+_SELECTED_CURRENCY);
+
+    let draw_ohlcv_function = null;
+
+    if(ohlcv_promise) {
+        draw_ohlcv_function = await ohlcv_promise;
+    }
+
+    let coinmarketcap_ticker = null;
+
+    try {
+        coinmarketcap_ticker = await coinmarketcap_promise;
+
+    }catch (e){
+        console.log('exception', e);
+    }
+
+    progressBar.itemDone('fetching coinmarketcap');
 
     progressBar.update(1);
     progressBar.stop();
 
-    terminal.nl();
+    if(coinmarketcap_ticker){
+
+        terminal.nl();
+        terminal.nl();
+        terminal.showCentered('Coinmarketcap.com stats for '+selected_coin, '-');
+        terminal.nl();
+        terminal.showCentered('Price: '+terminal.number_format(coinmarketcap_ticker['last'],3)+' '+_SELECTED_CURRENCY);
+        terminal.showCentered('Price BTC: '+terminal.number_format(coinmarketcap_ticker['info']['price_btc'],8)+' BTC');
+        terminal.showCentered('USD Price change 24 hours: '+terminal.number_format(coinmarketcap_ticker['change'],2)+'%');
+        terminal.showCentered('Market cap '+_SELECTED_CURRENCY+': '+terminal.number_format(coinmarketcap_ticker['info']['market_cap_'+_SELECTED_CURRENCY.toLowerCase()],0)+' '+_SELECTED_CURRENCY+ ' (rank #'+terminal.number_format(coinmarketcap_ticker['info']['rank'],0)+')');
+        terminal.showCentered('24 hours volume: '+terminal.number_format(coinmarketcap_ticker['quoteVolume'],0)+' '+_SELECTED_CURRENCY+' ('+terminal.number_format(coinmarketcap_ticker['baseVolume'],0)+' '+selected_coin+')');
+        terminal.nl();
+        terminal.showCentered('https://coinmarketcap.com/currencies/'+coinmarketcap_ticker['info']['id']+'/');
+        terminal.nl();
+
+    }
+
+    if(draw_ohlcv_function)
+        draw_ohlcv_function();
 
     let t = new Table({
         borderStyle: 3,
@@ -2461,6 +2510,10 @@ let initFunction = function() {
 
     if(command_line_options.quote) {
         _SELECTED_QUOTE = command_line_options.quote;
+    }
+
+    if(command_line_options.currency) {
+        _SELECTED_CURRENCY = command_line_options.currency;
     }
 
     if(command_line_options.balance){

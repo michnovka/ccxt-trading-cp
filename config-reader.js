@@ -73,6 +73,8 @@ function loadConfigExecute(password, config_object){
 
         module.exports.exchange_for_btc_usd = new ccxt[default_exchange_for_btc_usd]();
 
+        module.exports.coinmarketcap = new ccxt.coinmarketcap();
+
     }catch (e){
         // invalid config file
         console.log(e);

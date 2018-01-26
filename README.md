@@ -95,6 +95,7 @@ to show ETH/BTC exchange section.
 
 * *-q, --quote QUOTE* - This defines quote for markets (we trade in this currency) [Default: BTC]
 * *-b, --balance* - Go to balance overview (show how much of what I have on all exchanges and its BTC value)
+* *-c, --currency CURRENCY* - Currency for coin market cap (USD, EUR, CNY,...). Default is USD 
 * *--crossstock* - Go to cross-stock analysis (can I buy coin on one exchange and sell on another one?)                        
 * *--crosscurrency* - Go to cross-currency analysis (can I buy coin for BTC, then sell it for ETH then sell ETH for BTC and make profit?)
 * *--btcusd* - Show BTC / USD price
