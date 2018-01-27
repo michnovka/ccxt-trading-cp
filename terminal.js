@@ -1,6 +1,5 @@
 
 var str_pad = require('string-padder');
-var _number_format = require('number-format.js');
 
 // Terminal object
 // Allows for controlling the terminal by outputting control characters

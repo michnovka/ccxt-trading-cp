@@ -15,10 +15,9 @@
   "dependencies": {
     "ansicolor": "^1.1.71",
     "asciichart": "^1.5.7",
-    "ccxt": "^1.10.849",
+    "ccxt": "^1.10.878",
     "command-line-args": "^4.0.7",
     "command-line-usage": "^4.0.2",
-    "number-format.js": "^1.1.11",
     "ololog": "^1.1.84",
     "random-hash": "^4.0.1",
     "string-padder": "^1.0.3",
