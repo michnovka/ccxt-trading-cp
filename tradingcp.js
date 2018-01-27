@@ -242,7 +242,6 @@ async function getCoinMarketCapData(reload, do_not_create_progress_bar){
                     percent_change_1h: parseFloat(coinmarketcap_tickers[symbol]['info']['percent_change_1h']),
                     percent_change_24h: parseFloat(coinmarketcap_tickers[symbol]['info']['percent_change_24h']),
                     percent_change_7d: parseFloat(coinmarketcap_tickers[symbol]['info']['percent_change_7d']),
-                    baseVolume: parseFloat(coinmarketcap_tickers[symbol]['baseVolume']),
                     quoteVolume: parseFloat(coinmarketcap_tickers[symbol]['quoteVolume']),
                 };
             }
@@ -2494,7 +2493,7 @@ async function exchangeSection(selected_coin, reload){
         terminal.showCentered('Price '+_SELECTED_QUOTE+': '+terminal.number_format(coinmarketcap_ticker['price'],8)+' '+coinSymbolChar(_SELECTED_QUOTE));
         terminal.showCentered(_SELECTED_CURRENCY+' price change 24 hours: '+terminal.number_format(coinmarketcap_ticker['percent_change_24h'],2)+'%');
         terminal.showCentered('Market cap: '+terminal.number_format(coinmarketcap_ticker['market_cap_currency'],0)+' '+_SELECTED_CURRENCY+ ' (rank #'+terminal.number_format(coinmarketcap_ticker['rank'],0)+')');
-        terminal.showCentered('24 hours volume: '+terminal.number_format(coinmarketcap_ticker['quoteVolume'],0)+' '+_SELECTED_CURRENCY+' ('+terminal.number_format(coinmarketcap_ticker['baseVolume'],0)+' '+selected_coin+')');
+        terminal.showCentered('24 hours volume: '+terminal.number_format(coinmarketcap_ticker['quoteVolume'],0)+' '+_SELECTED_CURRENCY);
         terminal.nl();
         terminal.showCentered('https://coinmarketcap.com/currencies/'+coinmarketcap_ticker['id']+'/');
         terminal.nl();
