@@ -32,7 +32,7 @@ function loadConfigExecute(password, config_object){
                 for(let i = 0; i < config_object.exchanges_encrypted.length; i++){
                     let exchange_id = config_object.exchanges_encrypted[i].exchange;
 
-                    let exchange = new ccxt[exchange_id];
+                    let exchange = new ccxt[exchange_id]({verbose: config_object.exchanges_encrypted[i].debug ? 1 : 0});
 
                     crypth.changeIV(config_object.exchanges_encrypted[i].iv);
                     exchange.apiKey = crypth.decrypt(config_object.exchanges_encrypted[i].apiKey);
@@ -53,7 +53,7 @@ function loadConfigExecute(password, config_object){
                 for(let i = 0; i < config_object.exchanges_unencrypted.length; i++){
                     let exchange_id = config_object.exchanges_unencrypted[i].exchange;
 
-                    let exchange = new ccxt[exchange_id];
+                    let exchange = new ccxt[exchange_id]({verbose: config_object.exchanges_encrypted[i].debug ? 1 : 0});
 
                     exchange.apiKey = config_object.exchanges_unencrypted[i].apiKey;
                     exchange.secret = config_object.exchanges_unencrypted[i].apiSecret;
@@ -159,8 +159,6 @@ function getExchangeJSONObject(exchange_object, password, inactive){
         let Crypth = require('./crypto-helper'),
             crypth = new Crypth(password);
 
-
-
         exchange_array_item.iv = generateIV();
         crypth.changeIV(exchange_array_item.iv);
 
@@ -172,6 +170,7 @@ function getExchangeJSONObject(exchange_object, password, inactive){
         exchange_array_item.apiSecret = exchange_object.secret;
     }
     exchange_array_item.inactive = inactive ? 1 : 0;
+    exchange_array_item.debug = exchange_object.verbose ? 1 : 0;
 
     return exchange_array_item;
 }

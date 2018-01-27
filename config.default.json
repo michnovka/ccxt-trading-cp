@@ -3,7 +3,8 @@
     {
       "exchange": "binance",
       "apiKey": "XXXXXXXXXXXXXXXXXXXXXXXXX",
-      "apiSecret": "XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+      "apiSecret": "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "debug": 1
     },
     {
       "exchange": "bittrex",

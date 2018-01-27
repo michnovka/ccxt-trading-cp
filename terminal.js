@@ -314,47 +314,32 @@ var terminal = {
 
     },
 
-    number_format: function(number, decimals, only_significant_decimals, thousands_sep, dec_sep){
+    number_format: function(number, decimals, thousandsSep, decPoint){
 
-        var format = '0';
+        number = (number + '').replace(/[^0-9+\-Ee.]/g, '')
+        var n = !isFinite(+number) ? 0 : +number
+        var prec = !isFinite(+decimals) ? 0 : Math.abs(decimals)
+        var sep = (typeof thousandsSep === 'undefined') ? ',' : thousandsSep
+        var dec = (typeof decPoint === 'undefined') ? '.' : decPoint
+        var s = ''
 
-        if(!number)
-            number = 0;
-
-
-        number = parseFloat(number);
-
-        if(!thousands_sep && thousands_sep !== ''){
-            thousands_sep = ',';
+        var toFixedFix = function (n, prec) {
+            var k = Math.pow(10, prec)
+            return '' + (Math.round(n * k) / k)
+                .toFixed(prec)
         }
 
-        if(thousands_sep){
-            format = '#'+thousands_sep+'##0';
+        // @todo: for IE parseFloat(0.55).toFixed(0) = 0;
+        s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.')
+        if (s[0].length > 3) {
+            s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep)
+        }
+        if ((s[1] || '').length < prec) {
+            s[1] = s[1] || ''
+            s[1] += new Array(prec - s[1].length + 1).join('0')
         }
 
-        if(!dec_sep){
-            dec_sep = '.';
-        }
-
-        if(decimals){
-
-            if(decimals > 8){
-                decimals = 8;
-            }
-
-            format += dec_sep;
-
-            for(var i = 0; i < decimals; i++){
-                format += only_significant_decimals ? '#' : '0';
-            }
-
-        }else{
-            format += dec_sep + "#";
-            decimals = 0;
-        }
-
-        return _number_format(format, number.toFixed(decimals));
-
+        return s.join(dec)
     }
 };
 

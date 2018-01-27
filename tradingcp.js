@@ -201,7 +201,6 @@ async function getCoinMarketCapData(reload, do_not_create_progress_bar){
 
         progressBar.startItem( 'coinmarketcap' ) ;
 
-        await APISleep('coinmarketcap');
         let coinmarketcap_tickers = await config.coinmarketcap.fetchTickers(_SELECTED_CURRENCY);
 
         progressBar.itemDone( 'coinmarketcap' );
@@ -1831,7 +1830,13 @@ async function exchangeCancelOrder(selected_coin, selected_exchange_id, selected
         progressBar.startItem('Sending');
 
         await APISleep(selected_exchange_id);
-        await config.exchanges[selected_exchange_id].cancelOrder(selected_order_id, _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['symbol']);
+
+        let params = {};
+
+        if(selected_exchange_id === 'kucoin')
+            params = {type: _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['side'].toUpperCase()};
+
+        let canceled_order_details = await config.exchanges[selected_exchange_id].cancelOrder(selected_order_id, _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['symbol'], params);
 
         progressBar.itemDone('Sending');
         progressBar.update(1);
@@ -1839,7 +1844,11 @@ async function exchangeCancelOrder(selected_coin, selected_exchange_id, selected
 
         terminal.nl();
         terminal.nl();
-        terminal.writeLine('Order #' + selected_order_id + ' has been canceled!');
+
+        if(canceled_order_details && canceled_order_details['success'])
+            terminal.writeLine('Order #' + selected_order_id + ' has been canceled!');
+        else
+            terminal.writeLine('!!!! ERROR - Order #' + selected_order_id + ' has NOT been canceled !!!!');
 
     }catch(e) {
 
