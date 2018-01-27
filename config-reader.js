@@ -66,12 +66,12 @@ function loadConfigExecute(password, config_object){
             }
         }
 
-        let default_exchange_for_btc_usd = 'okcoinusd';
+        let default_exchange_for_fiat = 'okcoinusd';
 
-        if(config_object.hasOwnProperty('exchange_for_btc_usd'))
-            default_exchange_for_btc_usd = config_object.exchange_for_btc_usd;
+        if(config_object.hasOwnProperty('exchange_for_fiat'))
+            default_exchange_for_fiat = config_object.exchange_for_fiat;
 
-        module.exports.exchange_for_btc_usd = new ccxt[default_exchange_for_btc_usd]();
+        module.exports.exchange_for_fiat = new ccxt[default_exchange_for_fiat]();
 
         module.exports.coinmarketcap = new ccxt.coinmarketcap();
 
@@ -178,7 +178,7 @@ function getExchangeJSONObject(exchange_object, password, inactive){
 
 module.exports.saveConfig = function(password){
    let json_object = {
-       exchange_for_btc_usd: module.exports.exchange_for_btc_usd.describe()['id']
+       exchange_for_fiat: module.exports.exchange_for_fiat.describe()['id']
    };
 
    let exchanges_json_encoded = [];

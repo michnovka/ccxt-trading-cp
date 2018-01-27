@@ -14,6 +14,8 @@ This tool provides console UI to:
 * give overview about portfolio on various exchanges
 * show possible profit from buying/selling on different exchanges
 * show possible profit from buying/selling with different bases (e.g. XRP/BTC then XRP/ETH then ETH/BTC)
+* show coinmarketcap.com data
+* show how much of the market cap you own in ppm (per million - like percent, but 1 ppm = 1/1,000,000th of a thing)
 
 ## Disclaimer
 
@@ -150,4 +152,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 * All hail [ccxt](https://github.com/ccxt/ccxt/)
 * Very useful toolset for terminal interaction [terminal-kit](https://github.com/cronvel/terminal-kit)
 * Nice toolset for working with command line arguments [command-line-args](https://github.com/75lb/command-line-args)
-* everybody else whose code I include in package.json
+* I had to modify [terminal-table](https://github.com/zaftzaft/terminal-table) to correctly show tables with UTF-16 symbols (for currencies)
+* Thanks everybody else whose code I include in this project. Check package.json for more information

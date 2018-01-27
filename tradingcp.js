@@ -1,13 +1,11 @@
 #!/usr/bin/node
 
-let Table = require("terminal-table");
+let Table = require("./terminal-table");
 let commandLineArgs = require("command-line-args");
 let terminal = require('./terminal');
 let termkit = require( 'terminal-kit' ) ;
 let term = termkit.terminal ;
-
 let config = require('./config-reader.js');
-
 
 const commandLineOptionDefinitions = [
     { name: 'quote', alias: 'q', type: String, typeLabel: '[underline]{QUOTE}', description: 'This defines quote for markets (we trade in this currency)' },
@@ -160,6 +158,8 @@ function coinSymbolChar(coin){
             return '฿';
         case 'ETH':
             return 'Ξ';
+        case 'USD':
+            return '$';
     }
 
     return coin;
@@ -570,6 +570,11 @@ function mainSectionMenu(){
     terminal.showCentered('Main menu [' + _SELECTED_QUOTE +']', '-');
     terminal.nl();
 
+    let item7 = "7. Show BTC / USD chart (" + config.exchange_for_fiat.describe()['name'] + ")";
+
+    if(_SELECTED_QUOTE === 'ETH'){
+        item7 = "7. Show ETH / USD chart (" + config.exchange_for_fiat.describe()['name'] + ")";
+    }
 
     let items = [
         "1. Exchange - view rates and stats",
@@ -578,7 +583,7 @@ function mainSectionMenu(){
         "4. Cross-stock analysis",
         "5. Cross-currency analysis",
         "6. Change quote (active: "+_SELECTED_QUOTE+")",
-        "7. Show BTC / USD chart (" + config.exchange_for_btc_usd.describe()['name'] + ")",
+        item7,
         "8. Refresh balances and prices",
         "9. Encrypt config",
     ];
@@ -625,7 +630,11 @@ async function mainSection(option){
             return;
 
         case 7:
-            bitcoinPriceChart();
+            if(_SELECTED_QUOTE === 'ETH')
+                ethereumPriceChart();
+            else
+                bitcoinPriceChart();
+
             return;
 
         case 8:
@@ -715,24 +724,39 @@ function encryptConfigSection(password, confirm_password) {
 
 }
 
-async function bitcoinPriceChart(){
+async function quotePriceChart(coin, currency){
 
+    createProgressBar(160, 'Fetching '+coin+' / '+currency, 1);
 
-    createProgressBar(160, 'Fetching BTC / USD', 1);
-
-    let exchange_name = config.exchange_for_btc_usd.describe()['name'];
+    let exchange_name = config.exchange_for_fiat.describe()['name'];
     progressBar.startItem(exchange_name);
 
-    await APISleep(config.exchange_for_btc_usd.describe()['id']);
-    let ohlcv = await config.exchange_for_btc_usd.fetchOHLCV ('BTC/USD', '2h', Date.now() - 604800000, 84);
+    try {
+
+        let ohlcv = await config.exchange_for_fiat.fetchOHLCV(coin + '/' + currency, '2h', Date.now() - 604800000, 84);
+
+        let series = ohlcv.map (x => x[4]) ;        // index = [ timestamp, open, high, low, close, volume ]
+
+        let time_start = ohlcv[0][0];
+        let time_end = ohlcv[ohlcv.length - 1][0];
+
+        priceChart('1 week '+coin+' / '+currency+' (' + exchange_name + ')', series, coinSymbolChar(coin), coinSymbolChar(currency), 2, time_start, time_end);
+    }catch (e){
+        console.log(e);
+    }
+
     progressBar.itemDone(exchange_name);
 
-    let series = ohlcv.map (x => x[4]) ;        // index = [ timestamp, open, high, low, close, volume ]
+}
 
-    let time_start = ohlcv[0][0];
-    let time_end = ohlcv[ohlcv.length - 1][0];
+async function bitcoinPriceChart(){
+    await quotePriceChart('BTC', _SELECTED_CURRENCY);
 
-    priceChart('1 week BTC / USD (' + exchange_name + ')', series, '฿', '$', 2, time_start, time_end);
+    mainSection();
+}
+
+async function ethereumPriceChart(){
+    await quotePriceChart('ETH', _SELECTED_CURRENCY);
 
     mainSection();
 }
@@ -2601,7 +2625,9 @@ async function changeQuoteSection(new_quote){
         return;
     }else{
         _SELECTED_QUOTE = new_quote;
+        terminal.nl();
         terminal.writeLine("SUCCESS: Quote changed to "+new_quote);
+        terminal.nl();
     }
 
     mainSection();

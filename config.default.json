@@ -12,5 +12,5 @@
       "apiSecret": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
     },
   ],
-  "exchange_for_btc_usd": "okcoinusd"
+  "exchange_for_fiat": "okcoinusd"
 }
