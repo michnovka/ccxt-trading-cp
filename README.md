@@ -7,8 +7,8 @@ This tool provides simple UI wrapper around some functionality from an amazing [
 
 This tool provides console UI to:
 
-* show balances
-* fetch info about coins (price, volume, etc.)
+* show balances of multiple exchanges
+* fetch info about coins (price, volume, change, etc.)
 * place orders (BUY, SELL)
 * cancel open orders
 * give overview about portfolio on various exchanges
@@ -16,6 +16,7 @@ This tool provides console UI to:
 * show possible profit from buying/selling with different bases (e.g. XRP/BTC then XRP/ETH then ETH/BTC)
 * show coinmarketcap.com data
 * show how much of the market cap you own in ppm (per million - like percent, but 1 ppm = 1/1,000,000th of a thing)
+* encrypt your API keys and secrets
 
 ## Disclaimer
 
@@ -25,7 +26,7 @@ That being said, I hope this will not happen. I made this tool for myself and I 
 
 ## Getting Started
 
-Installation is straigh forward and requires getting copy of ccxt-trading-cp, installing modules it depends on and modifying config.json file
+Installation is straight forward and requires getting copy of ccxt-trading-cp, installing modules it depends on and modifying config.json file
 
 ### Prerequisites
 
@@ -49,7 +50,7 @@ This is a config JSON file where you have to provide API keys and secrets. Place
 * exchange - id of exchange from ccxt package
 * apiKey - your exchange API key
 * apiSecret - your exchange API secret
-* [inactive] - if set and equal to 1, then exchange is not used in scripts (useful if you dont want to delete it, just inactivate it for some time)
+* [inactive] - if set and equal to 1, then exchange is not used in scripts (useful if you don't want to delete it, just inactivate it for some time)
 
 ```
 {
@@ -66,12 +67,12 @@ This is a config JSON file where you have to provide API keys and secrets. Place
       "apiSecret": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
     },
   ],
-  "exchange_for_btc_usd": "okcoinusd"
+  "exchange_for_fiat": "okcoinusd"
 }
 
 ```
 
-There is also *exchange_for_btc_usd* property which is used only for fetching BTC/USD OCHLV chart and USD price of BTC.
+There is also *exchange_for_fiat* property which is used only for fetching BTC/USD OCHLV chart and USD price of BTC.
 
 Every time you add new exchange, insert it inside exchanges_unencrypted array. ccxt-trading-cp has ability to encrypt API key/secret credentials, but this can be done only from inside the app. First time you must enter it in plaintext and then select the option to encrypt config file from within the main menu.
 
@@ -101,7 +102,7 @@ to show ETH/BTC exchange section.
 * *--crossstock* - Go to cross-stock analysis (can I buy coin on one exchange and sell on another one?)                        
 * *--crosscurrency* - Go to cross-currency analysis (can I buy coin for BTC, then sell it for ETH then sell ETH for BTC and make profit?)
 * *--btcusd* - Show BTC / USD price
-* *-p, --password* PASSWORD - Prefill config password in command line
+* *-p, --password* PASSWORD - Pre-fill config password in command line
 * *-e, --exchange* COIN - Load exchange details about given coin
   
 ## Tested exchanges

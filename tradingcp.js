@@ -844,7 +844,7 @@ async function balanceSection(){
 
     });
 
-    let columns = ["Coin", "Total", "%", "Market ppm"];
+    let columns = ["Coin", "Total", "%", "Market ppm", "Change w/d/h"];
 
     t.attrRange({row: [0, 1]}, {
         align: "center",
@@ -878,12 +878,13 @@ async function balanceSection(){
             null,
             null,
             null,
+            null,
         ];
 
         let quote_value_total = 0;
 
 
-        let i = 4;
+        let i = 5;
         //foreach($_BALANCES_BY_EXCHANGES as $exchange_id => $coins) {
         for(let exchange_id in _BALANCES_BY_EXCHANGES) {
 
@@ -943,7 +944,7 @@ async function balanceSection(){
 
         let symbol_for_coinmarketcap = convertSymbolToCoinMarketCapSymbol(symbol);
 
-        let market_cap = parseFloat(_COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE][symbol_for_coinmarketcap]['market_cap']);
+        let market_cap = parseFloat(getArrayItem(_COINMARKETCAP_COINS, _SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE, symbol_for_coinmarketcap, 'market_cap'));
 
         if(market_cap && market_cap > 0) {
 
@@ -952,8 +953,15 @@ async function balanceSection(){
 
         }
 
+        let change1h = parseFloat(getArrayItem(_COINMARKETCAP_COINS, _SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE, symbol_for_coinmarketcap, 'percent_change_1h'));
+        let change24h = parseFloat(getArrayItem(_COINMARKETCAP_COINS, _SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE, symbol_for_coinmarketcap, 'percent_change_24h'));
+        let change7d = parseFloat(getArrayItem(_COINMARKETCAP_COINS, _SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE, symbol_for_coinmarketcap, 'percent_change_7d'));
+
+
         row[1] = terminal.number_format(total,3) + ' | '+ terminal.number_format(quote_value_total, 3)+' '+coinSymbolChar(_SELECTED_QUOTE);
         row[2] = quote_value_total;
+
+        row[4] = terminal.number_format(change7d,0)+'% '+terminal.number_format(change24h,0)+'% '+terminal.number_format(change1h,0)+'%';
 
         data.push(row);
 
@@ -984,8 +992,9 @@ async function balanceSection(){
     total_row[2] = terminal.number_format(total_row[2], 1)+'%';
 
     total_row[3] = '-';
+    total_row[4] = '-';
 
-    for(let i = 4; i < columns.length; i++){
+    for(let i = 5; i < columns.length; i++){
         total_row[i] = terminal.number_format(total_row[i], 3)+' '+coinSymbolChar(_SELECTED_QUOTE);
     }
 
