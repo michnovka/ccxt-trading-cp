@@ -66,6 +66,8 @@ let _QUOTES_BY_EXCHANGES = {};
 let _EXCHANGES_BY_QUOTES = {};
 let _OPEN_ORDERS = {};
 
+let _COINMARKETCAP_COINS = {};
+
 function getArrayItem(){
 
     if(arguments.length < 2)
@@ -149,19 +151,108 @@ function terminate()
     setTimeout( function() { term.down(1000); term.processExit() } , 100 ) ;
 }
 
+function coinSymbolChar(coin){
+
+    coin = coin.toUpperCase();
+
+    switch(coin){
+        case 'BTC':
+            return '฿';
+        case 'ETH':
+            return 'Ξ';
+    }
+
+    return coin;
+}
+
 async function getPricesAndBalances(reload){
 
     createProgressBar(160, 'Fetching Details', Object.keys(config.exchanges).length * 2);
 
     let promise_prices = getPrices(reload, true);
     let promise_balances = getBalances(reload, true);
+    let promise_coinmarketcap = getCoinMarketCapData(reload, true);
 
     await promise_prices;
     await promise_balances;
+    await promise_coinmarketcap;
 
     progressBar.update(1);
     progressBar.stop();
 
+}
+
+async function getCoinMarketCapData(reload, do_not_create_progress_bar){
+
+    if(
+        !(Object.keys(_COINMARKETCAP_COINS).length === 0 && _COINMARKETCAP_COINS.constructor === Object) &&
+        !(Object.keys(_COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE]).length === 0 && _COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE].constructor === Object) &&
+        !reload
+    ) {
+        return false;
+    }
+
+    if(!do_not_create_progress_bar)
+        createProgressBar(160, 'Fetching Coinmarketcap', 1);
+
+    _COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE] = {};
+
+    try{
+
+        progressBar.startItem( 'coinmarketcap' ) ;
+
+        await APISleep('coinmarketcap');
+        let coinmarketcap_tickers = await config.coinmarketcap.fetchTickers(_SELECTED_CURRENCY);
+
+        progressBar.itemDone( 'coinmarketcap' );
+
+
+        if(Object.keys(coinmarketcap_tickers).length > 0){
+
+            let quote_currency_price = parseFloat(coinmarketcap_tickers[_SELECTED_QUOTE+'/'+_SELECTED_CURRENCY]['last']);
+
+            for(let symbol in coinmarketcap_tickers){
+                if(!coinmarketcap_tickers.hasOwnProperty(symbol))
+                    continue;
+
+                let s = coinmarketcap_tickers[symbol]['symbol'].match(/(.*)\/USD$/i);
+                let coin = s[1];
+
+                let market_cap_currency = parseFloat(coinmarketcap_tickers[symbol]['info']['market_cap_usd']);
+
+                if(!market_cap_currency)
+                    continue;
+
+                let market_cap_quote = market_cap_currency / quote_currency_price;
+
+                let last_coin_price_currency = parseFloat(coinmarketcap_tickers[symbol]['last']);
+                let last_coin_price_quote = last_coin_price_currency / quote_currency_price;
+
+                _COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE][coin] = {
+                    id: coinmarketcap_tickers[symbol]['info']['id'],
+                    name: coinmarketcap_tickers[symbol]['info']['name'],
+                    rank: coinmarketcap_tickers[symbol]['info']['rank'],
+                    market_cap: market_cap_quote,
+                    market_cap_currency: coinmarketcap_tickers[symbol]['info']['market_cap_usd'],
+                    price: last_coin_price_quote,
+                    price_currency: last_coin_price_currency,
+                    available_supply: parseFloat(coinmarketcap_tickers[symbol]['info']['available_supply']),
+                    total_supply: parseFloat(coinmarketcap_tickers[symbol]['info']['total_supply']),
+                    max_supply: parseFloat(coinmarketcap_tickers[symbol]['info']['max_supply']),
+                    percent_change_1h: parseFloat(coinmarketcap_tickers[symbol]['info']['percent_change_1h']),
+                    percent_change_24h: parseFloat(coinmarketcap_tickers[symbol]['info']['percent_change_24h']),
+                    percent_change_7d: parseFloat(coinmarketcap_tickers[symbol]['info']['percent_change_7d']),
+                    baseVolume: parseFloat(coinmarketcap_tickers[symbol]['baseVolume']),
+                    quoteVolume: parseFloat(coinmarketcap_tickers[symbol]['quoteVolume']),
+                };
+            }
+        }
+    }catch (e){
+        console.log('exception', e);
+    }
+
+    if(!do_not_create_progress_bar)
+        progressBar.stop();
 }
 
 function createProgressBar(width, title, items){
@@ -691,6 +782,17 @@ function priceChart(title, series, symbol, quote, precision, timeStart, timeEnd)
 
 }
 
+function convertSymbolToCoinMarketCapSymbol(symbol) {
+
+    switch (symbol.toUpperCase()){
+        case 'IOTA':
+            return 'MIOTA';
+        case 'QSH':
+            return 'QASH';
+    }
+
+    return symbol;
+}
 // ------------------------------------------- BALANCE -----------------------------------------------
 
 async function balanceSection(){
@@ -714,12 +816,11 @@ async function balanceSection(){
         horizontalLine: true,
         rightPadding: 1,
         leftPadding: 1,
-        align: 'right',
-        width: ['10']
+        align: 'right'
 
     });
 
-    let columns = ["Coin", "Total", "%"];
+    let columns = ["Coin", "Total", "%", "Market ppm"];
 
     t.attrRange({row: [0, 1]}, {
         align: "center",
@@ -733,7 +834,7 @@ async function balanceSection(){
 
     let quote_value_overall = 0;
 
-    let total_row = ['TOTAL',0,0];
+    let total_row = ['TOTAL',0,0,0];
 
     //for ($_BALANCES_BY_COINS as $symbol => $balance){
     for (let symbol in _BALANCES_BY_COINS){
@@ -752,12 +853,13 @@ async function balanceSection(){
             symbol,
             null,
             null,
+            null,
         ];
 
         let quote_value_total = 0;
 
 
-        let i = 3;
+        let i = 4;
         //foreach($_BALANCES_BY_EXCHANGES as $exchange_id => $coins) {
         for(let exchange_id in _BALANCES_BY_EXCHANGES) {
 
@@ -801,9 +903,9 @@ async function balanceSection(){
             total_row[i++] += quote_value;
 
             if(symbol === _SELECTED_QUOTE)
-                row.push(terminal.number_format(coins_total,5)+' '+_SELECTED_QUOTE);
+                row.push(terminal.number_format(coins_total,3)+' '+coinSymbolChar(_SELECTED_QUOTE));
             else
-                row.push(coins_total ? terminal.number_format(quote_value, 3)+' '+_SELECTED_QUOTE : '-');
+                row.push(coins_total ? terminal.number_format(quote_value, 3)+' '+coinSymbolChar(_SELECTED_QUOTE) : '-');
 
         }
 
@@ -815,7 +917,18 @@ async function balanceSection(){
         if(quote_value_total < 0.001 && symbol !== _SELECTED_QUOTE)
             continue;
 
-        row[1] = terminal.number_format(total,3) + ' ('+ terminal.number_format(quote_value_total, 3)+' '+_SELECTED_QUOTE+')';
+        let symbol_for_coinmarketcap = convertSymbolToCoinMarketCapSymbol(symbol);
+
+        let market_cap = parseFloat(_COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE][symbol_for_coinmarketcap]['market_cap']);
+
+        if(market_cap && market_cap > 0) {
+
+            let market_ppm = quote_value_total / market_cap * 1000000;
+            row[3] = terminal.number_format(market_ppm, 3)+' ppm';
+
+        }
+
+        row[1] = terminal.number_format(total,3) + ' | '+ terminal.number_format(quote_value_total, 3)+' '+coinSymbolChar(_SELECTED_QUOTE);
         row[2] = quote_value_total;
 
         data.push(row);
@@ -843,11 +956,13 @@ async function balanceSection(){
         t.push(data[row_id]);
     }
 
-    total_row[1] = terminal.number_format(quote_value_overall, 5)+' '+_SELECTED_QUOTE;
+    total_row[1] = terminal.number_format(quote_value_overall, 5)+' '+coinSymbolChar(_SELECTED_QUOTE);
     total_row[2] = terminal.number_format(total_row[2], 1)+'%';
 
-    for(let i = 3; i < columns.length; i++){
-        total_row[i] = terminal.number_format(total_row[i], 3)+' '+_SELECTED_QUOTE;
+    total_row[3] = '-';
+
+    for(let i = 4; i < columns.length; i++){
+        total_row[i] = terminal.number_format(total_row[i], 3)+' '+coinSymbolChar(_SELECTED_QUOTE);
     }
 
     t.push(total_row);
@@ -1092,7 +1207,7 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
         terminal.nl();
 
         // how much sell for
-        terminal.writeLine('How much do you want to sell for? The min ASK price is: '+terminal.number_format(min_bid_price, 8) +' '+_SELECTED_QUOTE);
+        terminal.writeLine('How much do you want to sell for? The min ASK price is: '+terminal.number_format(min_bid_price, 8) +' '+coinSymbolChar(_SELECTED_QUOTE));
 
         term.inputField(
             function( error , input ) {
@@ -1205,7 +1320,7 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
         terminal.showCentered('Exchange: ' + config.exchanges[selected_exchange_id].describe()['name']);
         terminal.showCentered('Order type : ' + selected_type);
         terminal.showCentered('Market : ' + selected_coin + '/' + _SELECTED_QUOTE);
-        terminal.showCentered('SELL ' + terminal.number_format(spend, market.precision.amount) + ' ' + selected_coin + ' for ' + terminal.number_format(how_much_I_get, market.precision.price) + ' ' + _SELECTED_QUOTE + ' (' + terminal.number_format(parseFloat(price) / min_bid_price * 100, 2) + '% of min BID price)');
+        terminal.showCentered('SELL ' + terminal.number_format(spend, market.precision.amount) + ' ' + selected_coin + ' for ' + terminal.number_format(how_much_I_get, market.precision.price) + ' ' + coinSymbolChar(_SELECTED_QUOTE) + ' (' + terminal.number_format(parseFloat(price) / min_bid_price * 100, 2) + '% of min BID price)');
         terminal.showLine('=');
         terminal.showLine('=');
 
@@ -1336,7 +1451,7 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
         terminal.nl();
         // how much spend
 
-        terminal.writeLine('How much do you want to pay? The min ASK price is: '+terminal.number_format(min_ask_price, 8) +' '+_SELECTED_QUOTE);
+        terminal.writeLine('How much do you want to pay? The min ASK price is: '+terminal.number_format(min_ask_price, 8) +' '+coinSymbolChar(_SELECTED_QUOTE));
 
         term.inputField(
             function( error , input ) {
@@ -1445,7 +1560,7 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
         terminal.showCentered('Exchange: ' + config.exchanges[selected_exchange_id].describe()['name']);
         terminal.showCentered('Order type : ' + selected_type);
         terminal.showCentered('Market : ' + selected_coin + '/' + _SELECTED_QUOTE);
-        terminal.showCentered('BUY ' + terminal.number_format(how_much_I_get, market.precision.amount) + ' ' + selected_coin + ' for ' + terminal.number_format(spend, market.precision.price) + ' ' + _SELECTED_QUOTE + ' (' + terminal.number_format(parseFloat(price) / min_ask_price * 100, 2) + '% of min ASK price)');
+        terminal.showCentered('BUY ' + terminal.number_format(how_much_I_get, market.precision.amount) + ' ' + selected_coin + ' for ' + terminal.number_format(spend, market.precision.price) + ' ' + coinSymbolChar(_SELECTED_QUOTE) + ' (' + terminal.number_format(parseFloat(price) / min_ask_price * 100, 2) + '% of min ASK price)');
         terminal.showLine('=');
         terminal.showLine('=');
 
@@ -1644,8 +1759,8 @@ async function exchangeCancelOrder(selected_coin, selected_exchange_id, selected
         terminal.showCentered('Side : ' + _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['side'].toUpperCase());
         terminal.showCentered('Symbol : ' + _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['symbol']);
         terminal.showCentered('Type : ' + _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['type'].toUpperCase());
-        terminal.showCentered('Price : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['price'],market.precision.price) + ' ' + _SELECTED_QUOTE);
-        terminal.showCentered('Cost : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['cost'],market.precision.price) + ' ' + _SELECTED_QUOTE);
+        terminal.showCentered('Price : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['price'],market.precision.price) + ' ' + coinSymbolChar(_SELECTED_QUOTE));
+        terminal.showCentered('Cost : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['cost'],market.precision.price) + ' ' + coinSymbolChar(_SELECTED_QUOTE));
         terminal.showCentered('Amount : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['amount'],market.precision.amount) + ' ' + selected_coin);
         terminal.showCentered('Filled : ' + terminal.number_format(+ _OPEN_ORDERS[selected_coin + '/' + _SELECTED_QUOTE][selected_exchange_id][selected_order_id]['filled'],market.precision.amount) + ' ' + selected_coin);
         terminal.showLine('=');
@@ -1816,10 +1931,10 @@ async function exchangeOHLCVMenu(selected_coin, selected_exchange_id, selected_t
         } else {
             if(return_function_that_draws){
                 return function(){
-                    priceChart(terminal.niceTimeFormat(ohlcv_seconds * 96) + ' (Interval: ' + terminal.niceTimeFormat(ohlcv_seconds) + ') ' + selected_coin + ' / ' + _SELECTED_QUOTE + ' (' + config.exchanges[selected_exchange_id].describe()['name'] + ')', series, selected_coin, _SELECTED_QUOTE === 'BTC' ? '฿' : _SELECTED_QUOTE, 8, ohlcv_time_start, ohlcv_time_end);
+                    priceChart(terminal.niceTimeFormat(ohlcv_seconds * 96) + ' (Interval: ' + terminal.niceTimeFormat(ohlcv_seconds) + ') ' + selected_coin + ' / ' + _SELECTED_QUOTE + ' (' + config.exchanges[selected_exchange_id].describe()['name'] + ')', series, selected_coin, coinSymbolChar(_SELECTED_QUOTE), 8, ohlcv_time_start, ohlcv_time_end);
                 };
             }else{
-                priceChart(terminal.niceTimeFormat(ohlcv_seconds * 96) + ' (Interval: ' + terminal.niceTimeFormat(ohlcv_seconds) + ') ' + selected_coin + ' / ' + _SELECTED_QUOTE + ' (' + config.exchanges[selected_exchange_id].describe()['name'] + ')', series, selected_coin, _SELECTED_QUOTE === 'BTC' ? '฿' : _SELECTED_QUOTE, 8, ohlcv_time_start, ohlcv_time_end);
+                priceChart(terminal.niceTimeFormat(ohlcv_seconds * 96) + ' (Interval: ' + terminal.niceTimeFormat(ohlcv_seconds) + ') ' + selected_coin + ' / ' + _SELECTED_QUOTE + ' (' + config.exchanges[selected_exchange_id].describe()['name'] + ')', series, selected_coin, coinSymbolChar(_SELECTED_QUOTE), 8, ohlcv_time_start, ohlcv_time_end);
             }
         }
     } catch (e) {
@@ -2236,12 +2351,12 @@ async function exchangeSection(selected_coin, reload){
             data.push([
                 exchange_details['name'],
                 terminal.number_format(ticker['change'],1)+"%",
-                terminal.number_format(ticker['ask'],8)+" "+_SELECTED_QUOTE,
-                terminal.number_format(ticker['bid'],8)+" "+_SELECTED_QUOTE,
-                terminal.number_format(volume,8)+" "+_SELECTED_QUOTE,
-                quote_value ? terminal.number_format( parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, selected_coin, 'total')),3)+' ('+terminal.number_format(quote_value, 3)+' '+_SELECTED_QUOTE+')' : '-',
-                quote_value ? terminal.number_format( parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, selected_coin, 'free')),3)+' ('+terminal.number_format(quote_free_value, 3)+' '+_SELECTED_QUOTE+')' : '-',
-                terminal.number_format( parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, _SELECTED_QUOTE, 'free')), 3) + ' ' + _SELECTED_QUOTE
+                terminal.number_format(ticker['ask'],8)+" "+coinSymbolChar(_SELECTED_QUOTE),
+                terminal.number_format(ticker['bid'],8)+" "+coinSymbolChar(_SELECTED_QUOTE),
+                terminal.number_format(volume,8)+" "+coinSymbolChar(_SELECTED_QUOTE),
+                quote_value ? terminal.number_format( parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, selected_coin, 'total')),3)+' ('+terminal.number_format(quote_value, 3)+' '+coinSymbolChar(_SELECTED_QUOTE)+')' : '-',
+                quote_value ? terminal.number_format( parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, selected_coin, 'free')),3)+' ('+terminal.number_format(quote_free_value, 3)+' '+coinSymbolChar(_SELECTED_QUOTE)+')' : '-',
+                terminal.number_format( parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, exchange_id, _SELECTED_QUOTE, 'free')), 3) + ' ' + coinSymbolChar(_SELECTED_QUOTE)
             ]);
 
         }).catch(function(err){
@@ -2322,27 +2437,16 @@ async function exchangeSection(selected_coin, reload){
         ohlcv_promise = exchangeOHLCVMenu(selected_coin, highest_volume_exchange_id, '15m', true, true, true);
     }
 
-    progressBar.update({items: ++progress_bar_items});
-    progressBar.startItem('fetching coinmarketcap');
-
-    let coinmarketcap_promise = config.coinmarketcap.fetchTicker(selected_coin+'/'+_SELECTED_CURRENCY);
-
     let draw_ohlcv_function = null;
 
     if(ohlcv_promise) {
         draw_ohlcv_function = await ohlcv_promise;
     }
 
-    let coinmarketcap_ticker = null;
+    let symbol_for_coinmarketcap = convertSymbolToCoinMarketCapSymbol(selected_coin);
 
-    try {
-        coinmarketcap_ticker = await coinmarketcap_promise;
 
-    }catch (e){
-        console.log('exception', e);
-    }
-
-    progressBar.itemDone('fetching coinmarketcap');
+    let coinmarketcap_ticker = _COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE][symbol_for_coinmarketcap];
 
     progressBar.update(1);
     progressBar.stop();
@@ -2351,15 +2455,15 @@ async function exchangeSection(selected_coin, reload){
 
         terminal.nl();
         terminal.nl();
-        terminal.showCentered('Coinmarketcap.com stats for '+selected_coin, '-');
+        terminal.showCentered('Coinmarketcap.com stats for '+coinmarketcap_ticker['name'], '-');
         terminal.nl();
-        terminal.showCentered('Price: '+terminal.number_format(coinmarketcap_ticker['last'],3)+' '+_SELECTED_CURRENCY);
-        terminal.showCentered('Price BTC: '+terminal.number_format(coinmarketcap_ticker['info']['price_btc'],8)+' BTC');
-        terminal.showCentered('USD Price change 24 hours: '+terminal.number_format(coinmarketcap_ticker['change'],2)+'%');
-        terminal.showCentered('Market cap '+_SELECTED_CURRENCY+': '+terminal.number_format(coinmarketcap_ticker['info']['market_cap_'+_SELECTED_CURRENCY.toLowerCase()],0)+' '+_SELECTED_CURRENCY+ ' (rank #'+terminal.number_format(coinmarketcap_ticker['info']['rank'],0)+')');
+        terminal.showCentered('Price: '+terminal.number_format(coinmarketcap_ticker['price_currency'],3)+' '+_SELECTED_CURRENCY);
+        terminal.showCentered('Price '+_SELECTED_QUOTE+': '+terminal.number_format(coinmarketcap_ticker['price'],8)+' '+coinSymbolChar(_SELECTED_QUOTE));
+        terminal.showCentered(_SELECTED_CURRENCY+' price change 24 hours: '+terminal.number_format(coinmarketcap_ticker['percent_change_24h'],2)+'%');
+        terminal.showCentered('Market cap: '+terminal.number_format(coinmarketcap_ticker['market_cap_currency'],0)+' '+_SELECTED_CURRENCY+ ' (rank #'+terminal.number_format(coinmarketcap_ticker['rank'],0)+')');
         terminal.showCentered('24 hours volume: '+terminal.number_format(coinmarketcap_ticker['quoteVolume'],0)+' '+_SELECTED_CURRENCY+' ('+terminal.number_format(coinmarketcap_ticker['baseVolume'],0)+' '+selected_coin+')');
         terminal.nl();
-        terminal.showCentered('https://coinmarketcap.com/currencies/'+coinmarketcap_ticker['info']['id']+'/');
+        terminal.showCentered('https://coinmarketcap.com/currencies/'+coinmarketcap_ticker['id']+'/');
         terminal.nl();
 
     }
