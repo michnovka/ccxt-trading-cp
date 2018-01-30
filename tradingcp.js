@@ -167,7 +167,7 @@ function coinSymbolChar(coin){
 
 async function getPricesAndBalances(reload){
 
-    createProgressBar(160, 'Fetching Details', Object.keys(config.exchanges).length * 2);
+    createProgressBar(160, 'Fetching Details', Object.keys(config.exchanges).length * 2 + 1);
 
     let promise_prices = getPrices(reload, true);
     let promise_balances = getBalances(reload, true);
@@ -1093,7 +1093,8 @@ function exchangeSelectCoinMenu(){
     term.inputField(
         {autoComplete: items , autoCompleteMenu: true } ,
         function( error , input ) {
-            exchangeSection(input);
+            console.log(error);
+            exchangeSection(input.toUpperCase());
             return;
         }
     ) ;

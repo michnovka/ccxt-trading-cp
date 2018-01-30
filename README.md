@@ -51,6 +51,7 @@ This is a config JSON file where you have to provide API keys and secrets. Place
 * apiKey - your exchange API key
 * apiSecret - your exchange API secret
 * [inactive] - if set and equal to 1, then exchange is not used in scripts (useful if you don't want to delete it, just inactivate it for some time)
+* [debug] - if set and equal to 1, then exchange will work in verbose mode
 
 ```
 {
