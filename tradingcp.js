@@ -167,6 +167,7 @@ function coinSymbolChar(coin){
 
 async function getPricesAndBalances(reload){
 
+    // balances + prices + coinmarketcap
     createProgressBar(160, 'Fetching Details', Object.keys(config.exchanges).length * 2 + 1);
 
     let promise_prices = getPrices(reload, true);
@@ -1094,7 +1095,7 @@ function exchangeSelectCoinMenu(){
         {autoComplete: items , autoCompleteMenu: true } ,
         function( error , input ) {
             console.log(error);
-            exchangeSection(input.toUpperCase());
+            exchangeSection(input);
             return;
         }
     ) ;
@@ -1846,11 +1847,13 @@ async function exchangeCancelOrder(selected_coin, selected_exchange_id, selected
         terminal.nl();
         terminal.nl();
 
-        if(canceled_order_details && canceled_order_details['success'])
+        if(canceled_order_details) {
             terminal.writeLine('Order #' + selected_order_id + ' has been canceled!');
-        else
+            console.log(canceled_order_details);
+        } else {
             terminal.writeLine('!!!! ERROR - Order #' + selected_order_id + ' has NOT been canceled !!!!');
-
+            console.log(canceled_order_details);
+        }
     }catch(e) {
 
         progressBar.itemDone('Sending');
@@ -2300,6 +2303,8 @@ async function exchangeSection(selected_coin, reload){
 
         exchangeSelectCoinMenu();
         return;
+    }else{
+        selected_coin = selected_coin.toUpperCase();
     }
 
     terminal.nl();
@@ -2309,8 +2314,6 @@ async function exchangeSection(selected_coin, reload){
         exchangeSelectCoinMenu();
         return;
     }
-
-    //console.log(_PRICES_BY_COINS['BID'][_SELECTED_QUOTE][selected_coin]);
 
     let progress_bar_items = 2;
 
