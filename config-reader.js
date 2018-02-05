@@ -90,6 +90,10 @@ module.exports.loadConfig = function(callback, config_object = undefined, passwo
 
     try {
 
+        if(!fs.existsSync(path.join(__dirname, 'config.json'))){
+            term('\nNo config.json file. Exiting...\n');
+            process.exit();
+        }
 
         if(!config_object) {
             let config_file = fs.readFileSync(path.join(__dirname, 'config.json'),{ encoding: 'utf8' });
