@@ -1101,7 +1101,6 @@ function exchangeSelectCoinMenu(){
     term.inputField(
         {autoComplete: items , autoCompleteMenu: true } ,
         function( error , input ) {
-            console.log(error);
             exchangeSection(input);
             return;
         }
@@ -1591,6 +1590,8 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
     // yes/no
     let how_much_I_get = spend / price;
     how_much_I_get = how_much_I_get.toFixed(market.precision.amount);
+
+    spend = parseFloat(how_much_I_get) * parseFloat(price);
 
     if(!execute){
 
