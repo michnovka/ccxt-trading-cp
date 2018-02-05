@@ -186,8 +186,8 @@ async function getPricesAndBalances(reload){
 async function getCoinMarketCapData(reload, do_not_create_progress_bar){
 
     if(
-        !(Object.keys(_COINMARKETCAP_COINS).length === 0 && _COINMARKETCAP_COINS.constructor === Object) &&
-        !(Object.keys(_COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE]).length === 0 && _COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE].constructor === Object) &&
+        !( _COINMARKETCAP_COINS.constructor === Object && Object.keys(_COINMARKETCAP_COINS).length === 0) &&
+        !( _COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE] && _COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE].constructor === Object && Object.keys(_COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE]).length === 0) &&
         !reload
     ) {
         return false;
@@ -345,68 +345,75 @@ async function getPrices(reload, do_not_create_progress_bar){
 
             for(let symbol in tickers){
 
-                if(tickers.hasOwnProperty(symbol)){
+                if(!tickers.hasOwnProperty(symbol))
+                    continue;
 
-                    let ticker = tickers[symbol];
+                let ticker = tickers[symbol];
 
-                    if(!ticker || !ticker.hasOwnProperty('bid') || !ticker['bid'])
+                if(!ticker || !ticker.hasOwnProperty('bid') || !ticker['bid']) {
+                    if (!ticker || !ticker.hasOwnProperty('last') || !ticker['last']) {
                         continue;
-
-                    let m = symbol.match(/^([a-z0-9]+)\/([a-z0-9]+)$/i);
-
-                    if(!m || !m[2]) {
-                        continue;
+                    } else {
+                        ticker['bid'] = ticker['last'];
+                        ticker['ask'] = ticker['last'];
                     }
-
-                    if(!_PRICES_BY_EXCHANGES['ASK'][m[2]])
-                        _PRICES_BY_EXCHANGES['ASK'][m[2]] = {};
-
-                    if(!_PRICES_BY_EXCHANGES['ASK'][m[2]][exchange_id])
-                        _PRICES_BY_EXCHANGES['ASK'][m[2]][exchange_id] = {};
-                    if(!_PRICES_BY_COINS['ASK'][m[2]])
-                        _PRICES_BY_COINS['ASK'][m[2]] = {};
-
-                    if(!_PRICES_BY_COINS['ASK'][m[2]][m[1]])
-                        _PRICES_BY_COINS['ASK'][m[2]][m[1]] = {};
-
-
-                    if(!_PRICES_BY_EXCHANGES['BID'][m[2]])
-                        _PRICES_BY_EXCHANGES['BID'][m[2]] = {};
-
-                    if(!_PRICES_BY_EXCHANGES['BID'][m[2]][exchange_id])
-                        _PRICES_BY_EXCHANGES['BID'][m[2]][exchange_id] = {};
-
-                    if(!_PRICES_BY_COINS['BID'][m[2]])
-                        _PRICES_BY_COINS['BID'][m[2]] = {};
-
-                    if(!_PRICES_BY_COINS['BID'][m[2]][m[1]])
-                        _PRICES_BY_COINS['BID'][m[2]][m[1]] = {};
-
-                    if(!_QUOTES_BY_EXCHANGES[exchange_id])
-                        _QUOTES_BY_EXCHANGES[exchange_id] = {};
-
-                    if(!_QUOTES_BY_EXCHANGES[exchange_id][m[2]])
-                        _QUOTES_BY_EXCHANGES[exchange_id][m[2]] = 0;
-
-                    if(!_EXCHANGES_BY_QUOTES[m[2]])
-                        _EXCHANGES_BY_QUOTES[m[2]] = {};
-
-                    if(!_EXCHANGES_BY_QUOTES[m[2]][exchange_id])
-                        _EXCHANGES_BY_QUOTES[m[2]][exchange_id] = 0;
-
-
-                    _PRICES_BY_EXCHANGES['ASK'][m[2]][exchange_id][m[1]] = ticker['ask'];
-                    _PRICES_BY_EXCHANGES['BID'][m[2]][exchange_id][m[1]] = ticker['bid'];
-                    _PRICES_BY_COINS['ASK'][m[2]][m[1]][exchange_id] = ticker['ask'];
-                    _PRICES_BY_COINS['BID'][m[2]][m[1]][exchange_id] = ticker['bid'];
-
-
-
-                    _QUOTES_BY_EXCHANGES[exchange_id][m[2]]++;
-                    _EXCHANGES_BY_QUOTES[m[2]][exchange_id]++;
-
-
                 }
+
+                let m = symbol.match(/^([a-z0-9]+)\/([a-z0-9]+)$/i);
+
+                if(!m || !m[2]) {
+                    continue;
+                }
+
+                if(!_PRICES_BY_EXCHANGES['ASK'][m[2]])
+                    _PRICES_BY_EXCHANGES['ASK'][m[2]] = {};
+
+                if(!_PRICES_BY_EXCHANGES['ASK'][m[2]][exchange_id])
+                    _PRICES_BY_EXCHANGES['ASK'][m[2]][exchange_id] = {};
+                if(!_PRICES_BY_COINS['ASK'][m[2]])
+                    _PRICES_BY_COINS['ASK'][m[2]] = {};
+
+                if(!_PRICES_BY_COINS['ASK'][m[2]][m[1]])
+                    _PRICES_BY_COINS['ASK'][m[2]][m[1]] = {};
+
+
+                if(!_PRICES_BY_EXCHANGES['BID'][m[2]])
+                    _PRICES_BY_EXCHANGES['BID'][m[2]] = {};
+
+                if(!_PRICES_BY_EXCHANGES['BID'][m[2]][exchange_id])
+                    _PRICES_BY_EXCHANGES['BID'][m[2]][exchange_id] = {};
+
+                if(!_PRICES_BY_COINS['BID'][m[2]])
+                    _PRICES_BY_COINS['BID'][m[2]] = {};
+
+                if(!_PRICES_BY_COINS['BID'][m[2]][m[1]])
+                    _PRICES_BY_COINS['BID'][m[2]][m[1]] = {};
+
+                if(!_QUOTES_BY_EXCHANGES[exchange_id])
+                    _QUOTES_BY_EXCHANGES[exchange_id] = {};
+
+                if(!_QUOTES_BY_EXCHANGES[exchange_id][m[2]])
+                    _QUOTES_BY_EXCHANGES[exchange_id][m[2]] = 0;
+
+                if(!_EXCHANGES_BY_QUOTES[m[2]])
+                    _EXCHANGES_BY_QUOTES[m[2]] = {};
+
+                if(!_EXCHANGES_BY_QUOTES[m[2]][exchange_id])
+                    _EXCHANGES_BY_QUOTES[m[2]][exchange_id] = 0;
+
+
+                _PRICES_BY_EXCHANGES['ASK'][m[2]][exchange_id][m[1]] = ticker['ask'];
+                _PRICES_BY_EXCHANGES['BID'][m[2]][exchange_id][m[1]] = ticker['bid'];
+                _PRICES_BY_COINS['ASK'][m[2]][m[1]][exchange_id] = ticker['ask'];
+                _PRICES_BY_COINS['BID'][m[2]][m[1]][exchange_id] = ticker['bid'];
+
+
+
+                _QUOTES_BY_EXCHANGES[exchange_id][m[2]]++;
+                _EXCHANGES_BY_QUOTES[m[2]][exchange_id]++;
+
+
+
 
             }
 
@@ -1234,13 +1241,13 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
         return;
     }
 
-    let min_bid_price = getArrayItem(_PRICES_BY_EXCHANGES, 'BID', _SELECTED_QUOTE, selected_exchange_id, selected_coin);
+    let max_bid_price = getArrayItem(_PRICES_BY_EXCHANGES, 'BID', _SELECTED_QUOTE, selected_exchange_id, selected_coin);
 
     if(selected_type === 'LIMIT' && !price){
         terminal.nl();
 
         // how much sell for
-        terminal.writeLine('How much do you want to sell for? The min ASK price is: '+terminal.number_format(min_bid_price, 8) +' '+coinSymbolChar(_SELECTED_QUOTE));
+        terminal.writeLine('How much do you want to sell for? The max BID price is: '+terminal.number_format(max_bid_price, 8) +' '+coinSymbolChar(_SELECTED_QUOTE));
 
         term.inputField(
             function( error , input ) {
@@ -1257,7 +1264,7 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
                 price = parseFloat(m[1]);
 
                 if(m[2] && m[2] === '%'){
-                    price = price / 100 * min_bid_price;
+                    price = price / 100 * max_bid_price;
                 }
 
                 if(price < 0.00000001){
@@ -1284,7 +1291,7 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
     if(!spend) {
         terminal.nl();
         terminal.showCentered(selected_coin + ' available balance: ' + terminal.number_format(getArrayItem(_BALANCES_BY_EXCHANGES, selected_exchange_id, selected_coin, 'free'), 8));
-        terminal.showCentered(selected_coin + ' price: ' + terminal.number_format(getArrayItem(_PRICES_BY_EXCHANGES, 'ASK', _SELECTED_QUOTE, selected_exchange_id, selected_coin), 8));
+        terminal.showCentered(selected_coin + ' price: ' + terminal.number_format(max_bid_price, 8));
         terminal.showCentered(selected_coin + ' targeted price: ' + terminal.number_format(price, market.precision.price));
         terminal.nl();
         // how much spend
@@ -1333,7 +1340,7 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
     }
 
     if(!price)
-        price = min_bid_price;
+        price = min_ask_price;
 
     price = parseFloat(price);
     price = price.toFixed(market.precision.price);
@@ -1353,7 +1360,7 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
         terminal.showCentered('Exchange: ' + config.exchanges[selected_exchange_id].describe()['name']);
         terminal.showCentered('Order type : ' + selected_type);
         terminal.showCentered('Market : ' + selected_coin + '/' + _SELECTED_QUOTE);
-        terminal.showCentered('SELL ' + terminal.number_format(spend, market.precision.amount) + ' ' + selected_coin + ' for ' + terminal.number_format(how_much_I_get, market.precision.price) + ' ' + coinSymbolChar(_SELECTED_QUOTE) + ' (' + terminal.number_format(parseFloat(price) / min_bid_price * 100, 2) + '% of min BID price)');
+        terminal.showCentered('SELL ' + terminal.number_format(spend, market.precision.amount) + ' ' + selected_coin + ' for ' + terminal.number_format(how_much_I_get, market.precision.price) + ' ' + coinSymbolChar(_SELECTED_QUOTE) + ' (' + terminal.number_format(parseFloat(price) / max_bid_price * 100, 2) + '% of max BID price)');
         terminal.showLine('=');
         terminal.showLine('=');
 
@@ -1528,7 +1535,7 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
     if(!spend) {
         terminal.nl();
         terminal.showCentered(_SELECTED_QUOTE + ' available balance: ' + terminal.number_format(getArrayItem(_BALANCES_BY_EXCHANGES, selected_exchange_id, _SELECTED_QUOTE, 'free'), 8));
-        terminal.showCentered(selected_coin + ' price: ' + terminal.number_format(getArrayItem(_PRICES_BY_EXCHANGES, 'ASK', _SELECTED_QUOTE, selected_exchange_id, selected_coin), 8));
+        terminal.showCentered(selected_coin + ' price: ' + terminal.number_format(min_ask_price, 8));
         terminal.nl();
         // how much spend
 
@@ -1922,7 +1929,7 @@ async function exchangeOHLCVMenu(selected_coin, selected_exchange_id, selected_t
 
             let time_frame_seconds = getTimeFrameSeconds(config.exchanges[selected_exchange_id].timeframes[time_frame]);
 
-            items.push(time_frame + ' ' + terminal.niceTimeFormat(time_frame_seconds) + ' (Period: ' + terminal.niceTimeFormat(time_frame_seconds * 96) + ')');
+            items.push( config.exchanges[selected_exchange_id].timeframes[time_frame] + time_frame + ' ' + terminal.niceTimeFormat(time_frame_seconds) + ' (Period: ' + terminal.niceTimeFormat(time_frame_seconds * 96) + ')');
         }
 
         // we dont have any possible exchange -> error message and return to exchange
@@ -2295,6 +2302,7 @@ async function exchangeSection(selected_coin, reload){
 
     await getPricesAndBalances(reload);
 
+
     if(!selected_coin) {
         terminal.nl();
         terminal.nl();
@@ -2339,12 +2347,15 @@ async function exchangeSection(selected_coin, reload){
 
     _OPEN_ORDERS = {};
 
+
     for (let exchange_id in _PRICES_BY_COINS['BID'][_SELECTED_QUOTE][selected_coin]){
+
 
         if(!_PRICES_BY_COINS['BID'][_SELECTED_QUOTE][selected_coin].hasOwnProperty(exchange_id))
             continue;
 
-        if(!config.exchanges[exchange_id].markets[selected_coin+'/'+_SELECTED_QUOTE]['active'])
+        // only if false, not undefined (as it is not supported by all exchanges, e.g. bibox)
+        if(config.exchanges[exchange_id].markets[selected_coin+'/'+_SELECTED_QUOTE]['active'] === false)
             continue;
 
         // fetch tickers
@@ -2405,6 +2416,8 @@ async function exchangeSection(selected_coin, reload){
             ]);
 
         }).catch(function(err){
+
+            console.log(err,'fetched');
             progressBar.itemDone('fetching '+exchange_id+' ticker');
         });
 
@@ -2475,6 +2488,7 @@ async function exchangeSection(selected_coin, reload){
         }
     }
 
+
     progressBar.itemDone('calculating');
     let ohlcv_promise = null;
 
@@ -2490,8 +2504,7 @@ async function exchangeSection(selected_coin, reload){
 
     let symbol_for_coinmarketcap = convertSymbolToCoinMarketCapSymbol(selected_coin);
 
-
-    let coinmarketcap_ticker = _COINMARKETCAP_COINS[_SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE][symbol_for_coinmarketcap];
+    let coinmarketcap_ticker = getArrayItem(_COINMARKETCAP_COINS, _SELECTED_CURRENCY+ '/' +_SELECTED_QUOTE, symbol_for_coinmarketcap);
 
     progressBar.update(1);
     progressBar.stop();
