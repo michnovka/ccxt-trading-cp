@@ -143,8 +143,8 @@ module.exports.loadConfig = function(callback, config_object = undefined, passwo
         }
 
     }catch (e){
-        // invalid config file
-        console.log(e);
+        console.error('\nError parsing config.json. Check JSON syntax. Details: \n\n', e);
+
         process.exit();
     }
 
