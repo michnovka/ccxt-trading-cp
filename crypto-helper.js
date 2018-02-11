@@ -38,7 +38,6 @@ function CryptoHelper(secret, iv, algorithm){
 
         value = String(value);
 
-        console.log(this.algorithm, this.secret, this.iv);
         var cipher = crypto.createCipheriv(this.algorithm, this.secret, this.iv);
         return cipher.update(value, 'utf8', 'hex') + cipher.final('hex');
     };

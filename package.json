@@ -15,7 +15,7 @@
   "dependencies": {
     "ansicolor": "^1.1.71",
     "asciichart": "^1.5.7",
-    "ccxt": "^1.10.1049",
+    "ccxt": "^1.10.1076",
     "command-line-args": "^4.0.7",
     "command-line-usage": "^4.0.2",
     "ololog": "^1.1.84",

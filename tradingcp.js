@@ -407,12 +407,8 @@ async function getPrices(reload, do_not_create_progress_bar){
                 _PRICES_BY_COINS['ASK'][m[2]][m[1]][exchange_id] = ticker['ask'];
                 _PRICES_BY_COINS['BID'][m[2]][m[1]][exchange_id] = ticker['bid'];
 
-
-
                 _QUOTES_BY_EXCHANGES[exchange_id][m[2]]++;
                 _EXCHANGES_BY_QUOTES[m[2]][exchange_id]++;
-
-
 
 
             }
@@ -901,8 +897,11 @@ async function balanceSection(){
 
             let coins_total = 0;
 
-            if(coins[symbol])
+            let coins_available = getArrayItem(_PRICES_BY_EXCHANGES, 'BID',_SELECTED_QUOTE,exchange_id,symbol);
+
+            if(coins[symbol]){
                 coins_total = parseFloat(getArrayItem(coins,symbol,'total'));
+            }
 
             if(!_QUOTES_BY_EXCHANGES[exchange_id] || !_QUOTES_BY_EXCHANGES[exchange_id][_SELECTED_QUOTE])
                 continue;
@@ -921,7 +920,7 @@ async function balanceSection(){
                 let price_for_calculation = 0;
 
                 if(_PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE][exchange_id][symbol])
-                    price_for_calculation = parseFloat(_PRICES_BY_EXCHANGES['BID'][_SELECTED_QUOTE][exchange_id][symbol]);
+                    price_for_calculation = parseFloat(getArrayItem(_PRICES_BY_EXCHANGES, 'BID',_SELECTED_QUOTE,exchange_id,symbol));
 
                 quote_value *= price_for_calculation;
             }
@@ -936,7 +935,7 @@ async function balanceSection(){
             if(symbol === _SELECTED_QUOTE)
                 row.push(terminal.number_format(coins_total,3)+' '+coinSymbolChar(_SELECTED_QUOTE));
             else
-                row.push(coins_total ? terminal.number_format(quote_value, 3)+' '+coinSymbolChar(_SELECTED_QUOTE) : '-');
+                row.push(coins_total ? terminal.number_format(quote_value, 3)+' '+coinSymbolChar(_SELECTED_QUOTE) : (coins_available ? '*' : '-'));
 
         }
 
