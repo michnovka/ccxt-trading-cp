@@ -1338,7 +1338,7 @@ async function sellWizzard(selected_coin, selected_exchange_id, selected_type, p
     }
 
     if(!price)
-        price = min_ask_price;
+        price = max_bid_price;
 
     price = parseFloat(price);
     price = price.toFixed(market.precision.price);

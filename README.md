@@ -110,12 +110,14 @@ to show ETH/BTC exchange section.
 
 I myself am using the following exchanges without any issues
 
-* Bitfinex
-* Binance
 * Bibox
+* Binance
+* Bitfinex
+* Bittrex
 * Cryptopia
-* OKEX
+* HitBTC (API v2)
 * Kucoin
+* OKEX
 * Poloniex
 
 in theory it should work with many others, but I have not tested them. Some exchanges are limited in API possibilities, so they are just not suitable for this CP.
