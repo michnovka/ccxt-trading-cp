@@ -545,6 +545,14 @@ async function getBalances(reload, do_not_create_progress_bar){
 
 }
 
+function toFixedTrunc(value, n) {
+    const v = value.toString().split('.');
+    if (n <= 0) return v[0];
+    let f = v[1] || '';
+    if (f.length > n) return `${v[0]}.${f.substr(0,n)}`;
+    while (f.length < n) f += '0';
+    return `${v[0]}.${f}`
+}
 
 // -----------------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------------
@@ -1529,11 +1537,21 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
 
     let market = config.exchanges[selected_exchange_id].market(selected_coin+'/'+_SELECTED_QUOTE);
 
+
+    if(!price)
+        price = min_ask_price;
+
+    price = parseFloat(price);
+    price = price.toFixed(market.precision.price);
+
+    let totalQuote = parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, selected_exchange_id, _SELECTED_QUOTE, 'free'));
+
     // show prices
     if(!spend) {
         terminal.nl();
-        terminal.showCentered(_SELECTED_QUOTE + ' available balance: ' + terminal.number_format(getArrayItem(_BALANCES_BY_EXCHANGES, selected_exchange_id, _SELECTED_QUOTE, 'free'), 8));
-        terminal.showCentered(selected_coin + ' price: ' + terminal.number_format(min_ask_price, 8));
+        terminal.showCentered(_SELECTED_QUOTE + ' available balance: ' + terminal.number_format(totalQuote, 8));
+        terminal.showCentered(selected_coin + ' min ask price: ' + terminal.number_format(min_ask_price, 8));
+        terminal.showCentered('your bid: ' + terminal.number_format(price, 8));
         terminal.nl();
         // how much spend
 
@@ -1551,8 +1569,6 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
                 }
 
                 spend = parseFloat(m[1]);
-
-                let totalQuote = parseFloat(getArrayItem(_BALANCES_BY_EXCHANGES, selected_exchange_id, _SELECTED_QUOTE, 'free'));
 
                 if(m[2] && m[2] === '%'){
                     spend = spend / 100 * totalQuote;
@@ -1580,17 +1596,13 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
 
     }
 
-    if(!price)
-        price = min_ask_price;
-
-    price = parseFloat(price);
-    price = price.toFixed(market.precision.price);
-
     // yes/no
     let how_much_I_get = spend / price;
-    how_much_I_get = how_much_I_get.toFixed(market.precision.amount);
+    how_much_I_get = toFixedTrunc(how_much_I_get, market.precision.amount);
 
     spend = parseFloat(how_much_I_get) * parseFloat(price);
+
+
 
     if(!execute){
 
