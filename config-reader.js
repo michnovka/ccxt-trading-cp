@@ -53,7 +53,7 @@ function loadConfigExecute(password, config_object){
                 for(let i = 0; i < config_object.exchanges_unencrypted.length; i++){
                     let exchange_id = config_object.exchanges_unencrypted[i].exchange;
 
-                    let exchange = new ccxt[exchange_id]({verbose: config_object.exchanges_encrypted[i].debug ? 1 : 0});
+                    let exchange = new ccxt[exchange_id]({verbose: config_object.exchanges_unencrypted[i].debug ? 1 : 0});
 
                     exchange.apiKey = config_object.exchanges_unencrypted[i].apiKey;
                     exchange.secret = config_object.exchanges_unencrypted[i].apiSecret;

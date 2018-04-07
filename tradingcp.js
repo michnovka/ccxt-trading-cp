@@ -1603,7 +1603,6 @@ async function buyWizzard(selected_coin, selected_exchange_id, selected_type, pr
     spend = parseFloat(how_much_I_get) * parseFloat(price);
 
 
-
     if(!execute){
 
         terminal.nl();
